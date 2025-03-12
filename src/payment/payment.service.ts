@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Body } from '@nestjs/common'
 import axios from 'axios'
 import * as CryptoJS from 'crypto-js'
 import * as moment from 'moment'
@@ -80,7 +80,7 @@ export class PaymentService {
       amount: orderResult.amount,
       description: `Skincareshop - Payment for the order #${transId}`,
       bank_code: '',
-      callback_url: '/payment/callback'
+      callback_url: ''
     }
 
     const data = `${this.config.app_id}|${order.app_trans_id}|${order.app_user}|${order.amount}|${order.app_time}|${order.embed_data}|${order.item}`
@@ -88,6 +88,7 @@ export class PaymentService {
 
     try {
       const response = await axios.post(this.config.endpoint, null, { params: order })
+
       return response.data
     } catch (error) {
       console.error('Payment request failed:', error.response?.data || error.message)
@@ -95,57 +96,19 @@ export class PaymentService {
     }
   }
 
-  async handleCallback(dataStr: string, reqMac: string) {
-    try {
-      const mac = CryptoJS.HmacSHA256(dataStr, this.config.key2).toString()
-      if (reqMac !== mac) {
-        throw new BadRequestException('MAC not equal')
-      }
+  async handleCallback(orderId: number) {
+    await this.orderRepository.update({ orderId }, { status: 'paid' })
 
-      const dataJson = JSON.parse(dataStr)
-      const appTransParts = dataJson.app_trans_id.split('_')
-      const orderId = parseInt(appTransParts[1], 10)
+    const orderItems = await this.orderDetailRepository.find({
+      where: { order: { orderId } },
+      relations: ['product']
+    })
 
-      await this.orderRepository.update(orderId, { status: 'paid' })
-
-      const orderItems = JSON.parse(dataJson.item)
-      for (const item of orderItems) {
-        const productDetails = await this.skincareProductDetailsRepository.find({
-          where: { product: { productId: item.id }, expirationDate: LessThanOrEqual(new Date()) },
-          order: { expirationDate: 'ASC' }
-        })
-
-        let remainingQuantity = item.item_quantity
-
-        for (const detail of productDetails) {
-          if (remainingQuantity <= 0) break
-
-          const updateQuantity = Math.min(detail.quantity, remainingQuantity)
-          await this.skincareProductDetailsRepository.update(detail.productDetailsId, {
-            quantity: () => `quantity - ${updateQuantity}`
-          })
-
-          remainingQuantity -= updateQuantity
-        }
-
-        if (remainingQuantity > 0) {
-          await this.skincareProductDetailsRepository
-            .createQueryBuilder()
-            .update(productDetails[0])
-            .set({ quantity: () => `quantity - ${remainingQuantity}` })
-            .where('productId = :productId', { productId: item.item_id })
-            .execute()
-        }
-
-        await this.skincareProductRepository.update(item.item_id, {
-          stock: () => `stock - ${item.item_quantity}`
-        })
-      }
-
-      return { return_code: 1, return_message: 'success' }
-    } catch (error) {
-      console.error('Exception in callback:', error)
-      return { return_code: 0, return_message: error.message }
+    for (const item of orderItems) {
+      await this.skincareProductRepository.update(
+        { productId: item.product.productId },
+        { stock: item.product.stock - item.quantity }
+      )
     }
   }
 
