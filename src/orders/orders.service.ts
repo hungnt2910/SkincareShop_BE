@@ -18,8 +18,99 @@ export class OrdersService {
     private readonly skincareProductRepository: Repository<SkincareProduct>
   ) {}
 
+  async getAllOrder(){
+    const orders = await this.orderRepository
+    .createQueryBuilder('order')
+    .leftJoinAndSelect('order.orderDetails', 'orderDetail')
+    .leftJoinAndSelect('orderDetail.product', 'product')
+    .select([
+      'order.orderId AS orderId',
+      'order.status AS status',
+      'order.amount AS amount',
+      'order.shippingAddress AS shippingAddress',
+      'order.timestamp AS timestamp',
+      'orderDetail.orderDetailId AS orderDetailId',
+      'orderDetail.price AS price',
+      'orderDetail.quantity AS quantity',
+      'product.productName AS productName'
+    ])
+    .getRawMany();
+
+  // Transforming the flat data into a structured JSON format
+  const groupedOrders = orders.reduce((acc, row) => {
+    let order = acc.find(o => o.orderId === row.orderId);
+    if (!order) {
+      order = {
+        orderId: row.orderId,
+        status: row.status,
+        amount: row.amount,
+        shippingAddress: row.shippingAddress,
+        timestamp: row.timestamp,
+        orderDetails: []
+      };
+      acc.push(order);
+    }
+    
+    // Adding orderDetails
+    order.orderDetails.push({
+      orderDetailId: row.orderDetailId,
+      price: row.price,
+      quantity: row.quantity,
+      productName: row.productName
+    });
+
+    return acc;
+  }, []);
+
+  return groupedOrders;
+  }
+
   async getAllOrderByUser(userId: number) {
-    return await this.orderRepository.find({ where: { customer: { id: userId } }, relations: ['orderDetails'] })
+    const orders = await this.orderRepository
+    .createQueryBuilder('order')
+    .leftJoinAndSelect('order.orderDetails', 'orderDetail')
+    .leftJoinAndSelect('orderDetail.product', 'product')
+    .where('order.customer = :userId', { userId })
+    .select([
+      'order.orderId AS orderId',
+      'order.status AS status',
+      'order.amount AS amount',
+      'order.shippingAddress AS shippingAddress',
+      'order.timestamp AS timestamp',
+      'orderDetail.orderDetailId AS orderDetailId',
+      'orderDetail.price AS price',
+      'orderDetail.quantity AS quantity',
+      'product.productName AS productName'
+    ])
+    .getRawMany();
+
+  // Transforming the flat data into a structured JSON format
+  const groupedOrders = orders.reduce((acc, row) => {
+    let order = acc.find(o => o.orderId === row.orderId);
+    if (!order) {
+      order = {
+        orderId: row.orderId,
+        status: row.status,
+        amount: row.amount,
+        shippingAddress: row.shippingAddress,
+        timestamp: row.timestamp,
+        orderDetails: []
+      };
+      acc.push(order);
+    }
+    
+    // Adding orderDetails
+    order.orderDetails.push({
+      orderDetailId: row.orderDetailId,
+      price: row.price,
+      quantity: row.quantity,
+      productName: row.productName
+    });
+
+    return acc;
+  }, []);
+
+  return groupedOrders;
   }
 
   async readyToCheckout(readyToCheckoutDto: ReadyToCheckoutDto) {

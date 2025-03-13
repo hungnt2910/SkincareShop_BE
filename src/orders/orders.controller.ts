@@ -7,6 +7,11 @@ import { AuthGuard } from 'src/guards/auth.guard'
 export class OrdersController {
   constructor(private orderService: OrdersService) {}
 
+  @Get()
+  getAllOrder(){
+    return this.orderService.getAllOrder()
+  }
+
   @Get(':userId')
   getUserOrderHistory(@Param('userId') userId: number) {
     return this.orderService.getAllOrderByUser(userId)
