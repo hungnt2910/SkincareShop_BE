@@ -17,6 +17,7 @@ import { BrandModule } from './brand/brand.module'
 import { PaymentModule } from './payment/payment.module'
 import { SkincareRouteModule } from './skincare-route/skincare-route.module';
 import { VoucherModule } from './voucher/voucher.module';
+// import { GgmeetModule } from './ggmeet/ggmeet.module';
 import * as entities from './typeorm/entities'
 
 @Module({
@@ -54,7 +55,8 @@ import * as entities from './typeorm/entities'
     BrandModule,
     PaymentModule,
     SkincareRouteModule,
-    VoucherModule
+    VoucherModule,
+    // GgmeetModule
   ],
   controllers: [AppController],
   providers: [AppService]
