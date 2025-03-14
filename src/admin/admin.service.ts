@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { User } from 'src/typeorm/entities'
 import { Not, Repository } from 'typeorm'
 import { UpdateUserDto } from './dtos/UpdateUser.dto'
+import { AdminCreateUserDto } from './dtos/CreateUser.dto'
+import * as bcrypt from 'bcrypt'
 
 @Injectable()
 export class AdminService {
@@ -18,7 +20,7 @@ export class AdminService {
   }
 
   async deleteUser(userId: number) {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.userRepository.findOne({ where: { id: userId } })
 
     if (!user) {
       throw new NotFoundException('User not found')
@@ -32,7 +34,7 @@ export class AdminService {
     const user = await this.userRepository.findOne({ where: { id: userId } })
 
     if (!user) {
-        throw new NotFoundException('User not found');
+      throw new NotFoundException('User not found')
     }
 
     if (userInfo.username !== undefined) {
@@ -45,9 +47,36 @@ export class AdminService {
       user.address = userInfo.address
     }
     if (userInfo.email !== undefined) {
-        user.email = userInfo.email
-      }
+      user.email = userInfo.email
+    }
 
     return this.userRepository.save(user)
+  }
+
+  async createUser(userInfo: AdminCreateUserDto) {
+    try {
+      const { username, email, password } = userInfo
+
+      const emailInUse = await this.userRepository.find({
+        where: { email: userInfo.email }
+      })
+
+      if (emailInUse.length !== 0) {
+        throw new BadRequestException('Email already exist')
+      }
+
+      const hasedPassword = await bcrypt.hash(userInfo.password, 10)
+
+      const newUser = this.userRepository.create({
+        username,
+        email,
+        password: hasedPassword,
+        role: { roleId: userInfo.roleId }
+      })
+
+      this.userRepository.save(newUser)
+    } catch (error) {
+      throw new BadRequestException(error)
+    }
   }
 }

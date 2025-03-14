@@ -1,7 +1,14 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { OrderDetail, Orders, SkincareProduct, SkincareProductDetails, User } from 'src/typeorm/entities'
-import { Repository } from 'typeorm'
+import {
+  OrderDetail,
+  Orders,
+  ReturnOrderDetail,
+  SkincareProduct,
+  SkincareProductDetails,
+  User
+} from 'src/typeorm/entities'
+import { Or, Repository } from 'typeorm'
 import { OrderItemDto, ReadyToCheckoutDto, ReturnOrderDetailDto } from './dto/order-items-dto'
 import { log } from 'console'
 
@@ -15,102 +22,104 @@ export class OrdersService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     @InjectRepository(SkincareProduct)
-    private readonly skincareProductRepository: Repository<SkincareProduct>
+    private readonly skincareProductRepository: Repository<SkincareProduct>,
+    @InjectRepository(ReturnOrderDetail)
+    private readonly returnOrderDetailRepository: Repository<ReturnOrderDetail>
   ) {}
 
-  async getAllOrder(){
+  async getAllOrder() {
     const orders = await this.orderRepository
-    .createQueryBuilder('order')
-    .leftJoinAndSelect('order.orderDetails', 'orderDetail')
-    .leftJoinAndSelect('orderDetail.product', 'product')
-    .select([
-      'order.orderId AS orderId',
-      'order.status AS status',
-      'order.amount AS amount',
-      'order.shippingAddress AS shippingAddress',
-      'order.timestamp AS timestamp',
-      'orderDetail.orderDetailId AS orderDetailId',
-      'orderDetail.price AS price',
-      'orderDetail.quantity AS quantity',
-      'product.productName AS productName'
-    ])
-    .getRawMany();
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.orderDetails', 'orderDetail')
+      .leftJoinAndSelect('orderDetail.product', 'product')
+      .select([
+        'order.orderId AS orderId',
+        'order.status AS status',
+        'order.amount AS amount',
+        'order.shippingAddress AS shippingAddress',
+        'order.timestamp AS timestamp',
+        'orderDetail.orderDetailId AS orderDetailId',
+        'orderDetail.price AS price',
+        'orderDetail.quantity AS quantity',
+        'product.productName AS productName'
+      ])
+      .getRawMany()
 
-  // Transforming the flat data into a structured JSON format
-  const groupedOrders = orders.reduce((acc, row) => {
-    let order = acc.find(o => o.orderId === row.orderId);
-    if (!order) {
-      order = {
-        orderId: row.orderId,
-        status: row.status,
-        amount: row.amount,
-        shippingAddress: row.shippingAddress,
-        timestamp: row.timestamp,
-        orderDetails: []
-      };
-      acc.push(order);
-    }
-    
-    // Adding orderDetails
-    order.orderDetails.push({
-      orderDetailId: row.orderDetailId,
-      price: row.price,
-      quantity: row.quantity,
-      productName: row.productName
-    });
+    // Transforming the flat data into a structured JSON format
+    const groupedOrders = orders.reduce((acc, row) => {
+      let order = acc.find((o) => o.orderId === row.orderId)
+      if (!order) {
+        order = {
+          orderId: row.orderId,
+          status: row.status,
+          amount: row.amount,
+          shippingAddress: row.shippingAddress,
+          timestamp: row.timestamp,
+          orderDetails: []
+        }
+        acc.push(order)
+      }
 
-    return acc;
-  }, []);
+      // Adding orderDetails
+      order.orderDetails.push({
+        orderDetailId: row.orderDetailId,
+        price: row.price,
+        quantity: row.quantity,
+        productName: row.productName
+      })
 
-  return groupedOrders;
+      return acc
+    }, [])
+
+    return groupedOrders
   }
 
   async getAllOrderByUser(userId: number) {
     const orders = await this.orderRepository
-    .createQueryBuilder('order')
-    .leftJoinAndSelect('order.orderDetails', 'orderDetail')
-    .leftJoinAndSelect('orderDetail.product', 'product')
-    .where('order.customer = :userId', { userId })
-    .select([
-      'order.orderId AS orderId',
-      'order.status AS status',
-      'order.amount AS amount',
-      'order.shippingAddress AS shippingAddress',
-      'order.timestamp AS timestamp',
-      'orderDetail.orderDetailId AS orderDetailId',
-      'orderDetail.price AS price',
-      'orderDetail.quantity AS quantity',
-      'product.productName AS productName'
-    ])
-    .getRawMany();
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.orderDetails', 'orderDetail')
+      .leftJoinAndSelect('orderDetail.product', 'product')
+      .where('order.customer = :userId', { userId })
+      .select([
+        'order.orderId AS orderId',
+        'order.status AS status',
+        'order.amount AS amount',
+        'order.shippingAddress AS shippingAddress',
+        'order.timestamp AS timestamp',
+        'orderDetail.orderDetailId AS orderDetailId',
+        'orderDetail.price AS price',
+        'orderDetail.quantity AS quantity',
+        'product.productName AS productName'
+      ])
+      .getRawMany()
 
-  // Transforming the flat data into a structured JSON format
-  const groupedOrders = orders.reduce((acc, row) => {
-    let order = acc.find(o => o.orderId === row.orderId);
-    if (!order) {
-      order = {
-        orderId: row.orderId,
-        status: row.status,
-        amount: row.amount,
-        shippingAddress: row.shippingAddress,
-        timestamp: row.timestamp,
-        orderDetails: []
-      };
-      acc.push(order);
-    }
-    
-    // Adding orderDetails
-    order.orderDetails.push({
-      orderDetailId: row.orderDetailId,
-      price: row.price,
-      quantity: row.quantity,
-      productName: row.productName
-    });
+    // Transforming the flat data into a structured JSON format
+    const groupedOrders = orders.reduce((acc, row) => {
+      let order = acc.find((o) => o.orderId === row.orderId)
+      if (!order) {
+        order = {
+          orderId: row.orderId,
+          status: row.status,
+          amount: row.amount,
+          shippingAddress: row.shippingAddress,
+          timestamp: row.timestamp,
+          orderDetails: []
+        }
+        acc.push(order)
+      }
 
-    return acc;
-  }, []);
+      // Adding orderDetails
+      order.orderDetails.push({
+        orderDetailId: row.orderDetailId,
+        price: row.price,
+        quantity: row.quantity,
+        productName: row.productName
+      })
 
-  return groupedOrders;
+      return acc
+    }, [])
+
+    return groupedOrders
   }
 
   async readyToCheckout(readyToCheckoutDto: ReadyToCheckoutDto) {
@@ -161,5 +170,106 @@ export class OrdersService {
     }
   }
 
-  async ReturnOrderDetail(returnOrderDetailDto: ReturnOrderDetailDto) {}
+  async readyReturnOrderDetail(returnOrderDetailDto: ReturnOrderDetailDto) {
+    const user = await this.userRepository.findOne({ where: { id: returnOrderDetailDto.user_id } })
+    if (!user) {
+      throw new NotFoundException('User not found')
+    }
+
+    const returnOrder = new Orders()
+    returnOrder.customer = user
+    returnOrder.amount = returnOrderDetailDto.total_amount
+    returnOrder.status = 'returned'
+    returnOrder.shippingAddress = returnOrderDetailDto.shippingAddress
+
+    const savedReturnOrder = await this.orderRepository.save(returnOrder)
+
+    const returnOrderDetails: ReturnOrderDetail[] = []
+
+    for (const orderItem of returnOrderDetailDto.orderItems) {
+      const product = await this.skincareProductRepository.findOne({ where: { productId: orderItem.product_id } })
+      if (!product) {
+        throw new NotFoundException(`Product with ID ${orderItem.product_id} not found`)
+      }
+
+      const returnOrderDetail = new ReturnOrderDetail()
+      returnOrderDetail.order = savedReturnOrder
+      returnOrderDetail.product = product
+      returnOrderDetail.quantity = orderItem.quantity
+      returnOrderDetail.price = orderItem.price
+
+      returnOrderDetails.push(returnOrderDetail)
+    }
+
+    await this.returnOrderDetailRepository.save(returnOrderDetails)
+    return {
+      message: 'Order is being returned',
+      name: user.username,
+      email: user.email,
+      shippingAddress: savedReturnOrder.shippingAddress,
+      total_amount: savedReturnOrder.amount,
+      orderId: savedReturnOrder.orderId,
+      orderDetails: returnOrderDetails.map((detail) => ({
+        product_id: detail.product.productId,
+        quantity: detail.quantity,
+        price: detail.price
+      }))
+    }
+  }
+
+  async confirmOrder(orderId: number) {
+    const order = await this.orderRepository.findOne({ where: { orderId } })
+    if (!order) {
+      throw new NotFoundException('Order not found')
+    }
+
+    await this.orderRepository.update({ orderId }, { status: 'confirmed' })
+
+    const currentStatus = await this.orderRepository.findOne({ where: { orderId } })
+
+    return {
+      message: 'Order confirmed',
+      orderId
+    }
+  }
+
+  async deliverOrder(orderId: number) {
+    if (!orderId) {
+      throw new BadRequestException('Order ID is required')
+    }
+
+    const order = await this.orderRepository.findOne({ where: { orderId } })
+    if (!order) {
+      throw new NotFoundException('Order not found')
+    } else if (order.status === 'delivered') {
+      throw new BadRequestException('Order is already delivered')
+    }
+
+    await this.orderRepository.update({ orderId }, { status: 'delivered' })
+
+    return {
+      message: 'Order is delivered',
+      orderId
+    }
+  }
+
+  async refundOrder(orderId: number) {
+    if (!orderId) {
+      throw new BadRequestException('Order ID is required')
+    }
+
+    const order = await this.orderRepository.findOne({ where: { orderId } })
+    if (!order) {
+      throw new NotFoundException('Order not found')
+    } else if (order.status === 'refunded') {
+      throw new BadRequestException('Order is already refunded')
+    }
+
+    await this.orderRepository.update({ orderId }, { status: 'refunded' })
+
+    return {
+      message: 'Order is refunded',
+      orderId
+    }
+  }
 }
