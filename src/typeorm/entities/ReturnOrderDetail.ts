@@ -1,19 +1,23 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
-import { OrderDetail } from "./OrderDetail";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm'
+import { Orders } from './Order'
+import { SkincareProduct } from './SkincareProduct'
 
 @Entity()
 export class ReturnOrderDetail {
-    @PrimaryGeneratedColumn()
-    returnOrderDetailId: number;
+  @PrimaryGeneratedColumn()
+  returnOrderDetailId: number
 
-    @ManyToOne(() => OrderDetail, order => order.order)
-    @JoinColumn({ name: 'order_id' })
-    order: OrderDetail;
+  @ManyToOne(() => Orders, (order) => order.returnDetails)
+  @JoinColumn({ name: 'order_id' })
+  order: Orders
 
-    @ManyToOne(() => OrderDetail, detail => detail.orderDetailId)
-    @JoinColumn({ name: 'order_detail_id' })
-    orderDetail: OrderDetail;
+  @ManyToOne(() => SkincareProduct, (product) => product.productId)
+  @JoinColumn({ name: 'product_id' })
+  product: SkincareProduct
 
-    @Column()
-    quantity: number;
+  @Column()
+  price: number
+
+  @Column()
+  quantity: number
 }

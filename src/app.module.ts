@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Module } from '@nestjs/common'
+import { MiddlewareConsumer, Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { UserModule } from './user/user.module'
@@ -15,9 +15,10 @@ import { OrdersModule } from './orders/orders.module'
 import { AdminModule } from './admin/admin.module'
 import { BrandModule } from './brand/brand.module'
 import { PaymentModule } from './payment/payment.module'
-import { SkincareRouteModule } from './skincare-route/skincare-route.module';
-import { VoucherModule } from './voucher/voucher.module';
+import { SkincareRouteModule } from './skincare-route/skincare-route.module'
+import { VoucherModule } from './voucher/voucher.module'
 // import { GgmeetModule } from './ggmeet/ggmeet.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import * as entities from './typeorm/entities'
 
 @Module({
@@ -56,6 +57,7 @@ import * as entities from './typeorm/entities'
     PaymentModule,
     SkincareRouteModule,
     VoucherModule,
+    DashboardModule
     // GgmeetModule
   ],
   controllers: [AppController],

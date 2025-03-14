@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, Body } from '@nestjs/common'
 import axios from 'axios'
 import * as CryptoJS from 'crypto-js'
 import * as moment from 'moment'
-import { In, LessThanOrEqual, Repository } from 'typeorm'
+import { In, LessThanOrEqual, MoreThan, Repository } from 'typeorm'
 import { OrderDetail, Orders, SkincareProduct, SkincareProductDetails, User } from 'src/typeorm/entities'
 import { InjectRepository } from '@nestjs/typeorm'
 import { ConfigService } from '@nestjs/config'
@@ -97,18 +97,68 @@ export class PaymentService {
   }
 
   async handleCallback(orderId: number) {
-    await this.orderRepository.update({ orderId }, { status: 'paid' })
+    try {
+      // Update order status to 'paid'
+      await this.orderRepository.update({ orderId }, { status: 'paid' })
 
-    const orderItems = await this.orderDetailRepository.find({
-      where: { order: { orderId } },
-      relations: ['product']
-    })
+      // Get order items and related product details
+      const orderItems = await this.orderDetailRepository.find({
+        where: { order: { orderId } },
+        relations: ['product']
+      })
 
-    for (const item of orderItems) {
-      await this.skincareProductRepository.update(
-        { productId: item.product.productId },
-        { stock: item.product.stock - item.quantity }
-      )
+      for (const item of orderItems) {
+        let remainingQuantity = item.quantity
+
+        // Get product details ordered by expiration date
+        const productDetails = await this.skincareProductDetailsRepository.find({
+          where: {
+            product: { productId: item.product.productId },
+            expirationDate: MoreThan(new Date()) // Only consider non-expired products
+          },
+          order: { expirationDate: 'ASC' }
+        })
+
+        for (const detail of productDetails) {
+          if (remainingQuantity <= 0) break
+
+          const updateQuantity = Math.min(detail.quantity, remainingQuantity)
+
+          // Update product details quantity
+          await this.skincareProductDetailsRepository.update(
+            { productDetailsId: detail.productDetailsId },
+            { quantity: detail.quantity - updateQuantity }
+          )
+
+          remainingQuantity -= updateQuantity
+        }
+
+        // If there's still remaining quantity, reduce it from overall stock
+        if (remainingQuantity > 0) {
+          await this.skincareProductDetailsRepository.decrement(
+            { product: { productId: item.product.productId } },
+            'quantity',
+            remainingQuantity
+          )
+        }
+
+        // Update product stock in main table
+        await this.skincareProductRepository.update(
+          { productId: item.product.productId },
+          { stock: item.product.stock - item.quantity }
+        )
+      }
+
+      return {
+        return_code: 1,
+        return_message: 'success'
+      }
+    } catch (error) {
+      console.error('Exception in callback:', error)
+      return {
+        return_code: 0,
+        return_message: error.message
+      }
     }
   }
 

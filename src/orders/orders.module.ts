@@ -1,13 +1,27 @@
-import { Module } from '@nestjs/common'
+import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common'
 import { OrdersController } from './orders.controller'
 import { OrdersService } from './orders.service'
 import { TypeOrmModule } from '@nestjs/typeorm'
-import { OrderDetail, Orders, SkincareProduct, SkincareProductDetails, User } from 'src/typeorm/entities'
+import {
+  OrderDetail,
+  Orders,
+  ReturnOrderDetail,
+  SkincareProduct,
+  SkincareProductDetails,
+  User
+} from 'src/typeorm/entities'
+import { OrdersMiddleware } from './orders.middleware'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Orders, OrderDetail, SkincareProduct, SkincareProductDetails, User])],
+  imports: [
+    TypeOrmModule.forFeature([Orders, OrderDetail, SkincareProduct, SkincareProductDetails, User, ReturnOrderDetail])
+  ],
   controllers: [OrdersController],
-  providers: [OrdersService],
+  providers: [OrdersService, OrdersMiddleware],
   exports: [OrdersService]
 })
-export class OrdersModule {}
+export class OrdersModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(OrdersMiddleware).forRoutes({ path: 'orders/confirm/:orderId', method: RequestMethod.PUT })
+  }
+}
