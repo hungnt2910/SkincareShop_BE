@@ -263,13 +263,327 @@ export class OrdersService {
       throw new NotFoundException('Order not found')
     } else if (order.status === 'refunded') {
       throw new BadRequestException('Order is already refunded')
+    } else if (order.status !== 'returned') {
+      throw new BadRequestException('Order is not returned to be refunded')
     }
 
     await this.orderRepository.update({ orderId }, { status: 'refunded' })
 
     return {
-      message: 'Order is refunded',
+      message: `Order is refunded.`,
       orderId
     }
+  }
+
+  async getRefundedOrderByUser(userId: number) {
+    const orders = await this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.returnDetails', 'returnDetail')
+      .leftJoinAndSelect('returnDetail.product', 'product')
+      .where('order.customer = :userId', { userId })
+      .andWhere('order.status = :status', { status: 'refunded' })
+      .select([
+        'order.orderId AS orderId',
+        'order.status AS status',
+        'order.amount AS amount',
+        'order.shippingAddress AS shippingAddress',
+        'order.timestamp AS timestamp',
+        'returnDetail.returnOrderDetailId AS returnOrderDetailId',
+        'returnDetail.price AS price',
+        'returnDetail.quantity AS quantity',
+        'product.productName AS productName'
+      ])
+      .getRawMany()
+
+    if (!orders.length) {
+      throw new NotFoundException(`No refunded orders found for user with ID ${userId}`)
+    }
+
+    const groupedOrders = orders.reduce((acc, row) => {
+      let order = acc.find((o) => o.orderId === row.orderId)
+      if (!order) {
+        order = {
+          orderId: row.orderId,
+          status: row.status,
+          amount: row.amount,
+          shippingAddress: row.shippingAddress,
+          timestamp: row.timestamp,
+          returnDetails: []
+        }
+        acc.push(order)
+      }
+
+      // Adding order details
+      order.returnDetails.push({
+        returnOrderDetailId: row.returnOrderDetailId,
+        price: row.price,
+        quantity: row.quantity,
+        productName: row.productName
+      })
+
+      return acc
+    }, [])
+
+    return groupedOrders
+  }
+
+  async getReturnedOrderByUser(userId: number) {
+    const orders = await this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.returnDetails', 'returnDetail')
+      .leftJoinAndSelect('returnDetail.product', 'product')
+      .where('order.customer = :userId', { userId })
+      .andWhere('order.status = :status', { status: 'returned' })
+      .select([
+        'order.orderId AS orderId',
+        'order.status AS status',
+        'order.amount AS amount',
+        'order.shippingAddress AS shippingAddress',
+        'order.timestamp AS timestamp',
+        'returnDetail.returnOrderDetailId AS returnOrderDetailId',
+        'returnDetail.price AS price',
+        'returnDetail.quantity AS quantity',
+        'product.productName AS productName'
+      ])
+      .getRawMany()
+
+    if (!orders.length) {
+      throw new NotFoundException(`No returned orders found for user with ID ${userId}`)
+    }
+
+    const groupedOrders = orders.reduce((acc, row) => {
+      let order = acc.find((o) => o.orderId === row.orderId)
+      if (!order) {
+        order = {
+          orderId: row.orderId,
+          status: row.status,
+          amount: row.amount,
+          shippingAddress: row.shippingAddress,
+          timestamp: row.timestamp,
+          returnDetails: []
+        }
+        acc.push(order)
+      }
+
+      // Adding order details
+      order.returnDetails.push({
+        returnOrderDetailId: row.returnOrderDetailId,
+        price: row.price,
+        quantity: row.quantity,
+        productName: row.productName
+      })
+
+      return acc
+    }, [])
+
+    return groupedOrders
+  }
+
+  async getDeliveredOrderByUser(userId: number) {
+    const orders = await this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.orderDetails', 'orderDetail')
+      .leftJoinAndSelect('orderDetail.product', 'product')
+      .where('order.customer = :userId', { userId })
+      .andWhere('order.status = :status', { status: 'delivered' })
+      .select([
+        'order.orderId AS orderId',
+        'order.status AS status',
+        'order.amount AS amount',
+        'order.shippingAddress AS shippingAddress',
+        'order.timestamp AS timestamp',
+        'orderDetail.orderDetailId AS orderDetailId',
+        'orderDetail.price AS price',
+        'orderDetail.quantity AS quantity',
+        'product.productName AS productName'
+      ])
+      .getRawMany()
+
+    if (!orders.length) {
+      throw new NotFoundException(`No delivered orders found for user with ID ${userId}`)
+    }
+
+    const groupedOrders = orders.reduce((acc, row) => {
+      let order = acc.find((o) => o.orderId === row.orderId)
+      if (!order) {
+        order = {
+          orderId: row.orderId,
+          status: row.status,
+          amount: row.amount,
+          shippingAddress: row.shippingAddress,
+          timestamp: row.timestamp,
+          orderDetails: []
+        }
+        acc.push(order)
+      }
+
+      // Adding order details
+      order.orderDetails.push({
+        orderDetailId: row.orderDetailId,
+        price: row.price,
+        quantity: row.quantity,
+        productName: row.productName
+      })
+
+      return acc
+    }, [])
+
+    return groupedOrders
+  }
+
+  async getConfirmedOrderByUser(userId: number) {
+    const orders = await this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.orderDetails', 'orderDetail')
+      .leftJoinAndSelect('orderDetail.product', 'product')
+      .where('order.customer = :userId', { userId })
+      .andWhere('order.status = :status', { status: 'confirmed' })
+      .select([
+        'order.orderId AS orderId',
+        'order.status AS status',
+        'order.amount AS amount',
+        'order.shippingAddress AS shippingAddress',
+        'order.timestamp AS timestamp',
+        'orderDetail.orderDetailId AS orderDetailId',
+        'orderDetail.price AS price',
+        'orderDetail.quantity AS quantity',
+        'product.productName AS productName'
+      ])
+      .getRawMany()
+
+    if (!orders.length) {
+      throw new NotFoundException(`No confirmed orders found for user with ID ${userId}`)
+    }
+
+    const groupedOrders = orders.reduce((acc, row) => {
+      let order = acc.find((o) => o.orderId === row.orderId)
+      if (!order) {
+        order = {
+          orderId: row.orderId,
+          status: row.status,
+          amount: row.amount,
+          shippingAddress: row.shippingAddress,
+          timestamp: row.timestamp,
+          orderDetails: []
+        }
+        acc.push(order)
+      }
+
+      // Adding order details
+      order.orderDetails.push({
+        orderDetailId: row.orderDetailId,
+        price: row.price,
+        quantity: row.quantity,
+        productName: row.productName
+      })
+
+      return acc
+    }, [])
+
+    return groupedOrders
+  }
+
+  async getPendingOrderByUser(userId: number) {
+    const orders = await this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.orderDetails', 'orderDetail')
+      .leftJoinAndSelect('orderDetail.product', 'product')
+      .where('order.customer = :userId', { userId })
+      .andWhere('order.status = :status', { status: 'pending' })
+      .select([
+        'order.orderId AS orderId',
+        'order.status AS status',
+        'order.amount AS amount',
+        'order.shippingAddress AS shippingAddress',
+        'order.timestamp AS timestamp',
+        'orderDetail.orderDetailId AS orderDetailId',
+        'orderDetail.price AS price',
+        'orderDetail.quantity AS quantity',
+        'product.productName AS productName'
+      ])
+      .getRawMany()
+
+    if (!orders.length) {
+      throw new NotFoundException(`No pending orders found for user with ID ${userId}`)
+    }
+
+    const groupedOrders = orders.reduce((acc, row) => {
+      let order = acc.find((o) => o.orderId === row.orderId)
+      if (!order) {
+        order = {
+          orderId: row.orderId,
+          status: row.status,
+          amount: row.amount,
+          shippingAddress: row.shippingAddress,
+          timestamp: row.timestamp,
+          orderDetails: []
+        }
+        acc.push(order)
+      }
+
+      // Adding order details
+      order.orderDetails.push({
+        orderDetailId: row.orderDetailId,
+        price: row.price,
+        quantity: row.quantity,
+        productName: row.productName
+      })
+
+      return acc
+    }, [])
+
+    return groupedOrders
+  }
+
+  async getPaidOrderByUser(userId: number) {
+    const orders = await this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.orderDetails', 'orderDetail')
+      .leftJoinAndSelect('orderDetail.product', 'product')
+      .where('order.customer = :userId', { userId })
+      .andWhere('order.status = :status', { status: 'paid' })
+      .select([
+        'order.orderId AS orderId',
+        'order.status AS status',
+        'order.amount AS amount',
+        'order.shippingAddress AS shippingAddress',
+        'order.timestamp AS timestamp',
+        'orderDetail.orderDetailId AS orderDetailId',
+        'orderDetail.price AS price',
+        'orderDetail.quantity AS quantity',
+        'product.productName AS productName'
+      ])
+      .getRawMany()
+
+    if (!orders.length) {
+      throw new NotFoundException(`No paid orders found for user with ID ${userId}`)
+    }
+
+    const groupedOrders = orders.reduce((acc, row) => {
+      let order = acc.find((o) => o.orderId === row.orderId)
+      if (!order) {
+        order = {
+          orderId: row.orderId,
+          status: row.status,
+          amount: row.amount,
+          shippingAddress: row.shippingAddress,
+          timestamp: row.timestamp,
+          orderDetails: []
+        }
+        acc.push(order)
+      }
+
+      // Adding order details
+      order.orderDetails.push({
+        orderDetailId: row.orderDetailId,
+        price: row.price,
+        quantity: row.quantity,
+        productName: row.productName
+      })
+
+      return acc
+    }, [])
+
+    return groupedOrders
   }
 }

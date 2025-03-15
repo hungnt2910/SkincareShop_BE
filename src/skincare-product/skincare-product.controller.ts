@@ -4,6 +4,7 @@ import { CreateProductWithDetailsDto } from './dtos/AddProduct.dto'
 import { UpdateProductDto } from './dtos/update-product.dto'
 
 @Controller('skincare-product')
+// @UsePipes(new ValidationPipe({ whitelist: true }))
 export class SkincareProductController {
   constructor(private readonly SkincareProductService: SkincareProductService) {}
 
