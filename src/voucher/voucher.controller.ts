@@ -1,9 +1,10 @@
-import { Controller, UseGuards, Post, Body, Put, Param, Get } from '@nestjs/common'
+import { Controller, UseGuards, Post, Body, Put, Param, Get, UsePipes, ValidationPipe } from '@nestjs/common'
 import { AuthGuard } from 'src/guards/auth.guard'
 import { VoucherService } from './voucher.service'
 import { applyVoucherDto, claimVoucherDto, createVoucherDto, updateVoucherDto } from './dtos/voucher-dto'
 
 @Controller('voucher')
+// @UsePipes(new ValidationPipe({ whitelist: true }))
 export class VoucherController {
   constructor(private voucherService: VoucherService) {}
 
@@ -34,5 +35,11 @@ export class VoucherController {
   @Post('apply')
   applyVoucher(@Body() applyVoucherDto: applyVoucherDto) {
     return this.voucherService.applyVoucher(applyVoucherDto)
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('getVoucherByUser/:userId')
+  getVoucherByUser(@Param('userId') userId: number) {
+    return this.voucherService.getVoucherByUser(userId)
   }
 }

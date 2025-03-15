@@ -167,4 +167,13 @@ export class VoucherService {
       discount: voucher.discount
     }
   }
+
+  async getVoucherByUser(userId: number) {
+    const user = await this.userRepository.findOne({ where: { id: userId } })
+    if (!user) {
+      throw new BadRequestException(`User with id ${userId} not found`)
+    }
+
+    return await this.userVoucherRepository.find({ where: { user: { id: userId } } })
+  }
 }
