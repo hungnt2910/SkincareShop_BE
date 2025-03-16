@@ -15,23 +15,23 @@ export class SkincareProductService {
     @InjectRepository(Brand)
     private readonly BrandRepository: Repository<Brand>,
     @InjectRepository(SkincareProductDetails)
-    private readonly SkincareProductDetailsRepository: Repository<SkincareProductDetails>,
+    private readonly SkincareProductDetailsRepository: Repository<SkincareProductDetails>
   ) {}
 
   async getAllProduct() {
     return this.SkincareProductRepository.find()
   }
 
-  async getProductById(productId : number) {
+  async getProductById(productId: number) {
     console.log(productId)
     const product = await this.SkincareProductRepository.findOne({
       where: { productId },
-      relations: ["category"], 
+      relations: ['category']
     })
 
     console.log(product)
-    if(!product){
-      throw new NotFoundException("Product is not found")
+    if (!product) {
+      throw new NotFoundException('Product is not found')
     }
     const relateProduct = await this.SkincareProductRepository.find({ where: { category: product?.category } })
     return { ...product, relatedProduct: relateProduct }
@@ -48,14 +48,13 @@ export class SkincareProductService {
   }
 
   async getProductsByBrand(brandName: string) {
-    return await this.SkincareProductRepository
-      .createQueryBuilder('product')
+    return await this.SkincareProductRepository.createQueryBuilder('product')
       .leftJoinAndSelect('product.brand', 'brand') // Join with Brand table
       .where('brand.brandName = :brandName', { brandName }) // Filter by brand name
-      .getMany();
+      .getMany()
   }
 
-  async searchProductByName(productName : string){
+  async searchProductByName(productName: string) {
     console.log(productName)
     return await this.SkincareProductRepository.find({
       where: {
@@ -65,53 +64,53 @@ export class SkincareProductService {
   }
 
   async addProductToWarehouse(createProductDto: CreateProductWithDetailsDto) {
-    const { categoryId, brandId, productionDate, expirationDate, quantity, ...productData } = createProductDto;
-  
+    const { categoryId, brandId, productionDate, expirationDate, quantity, ...productData } = createProductDto
+
     let product = await this.SkincareProductRepository.findOne({
-      where: { productName: productData.productName },
-    });
-  
+      where: { productName: productData.productName }
+    })
+
     if (!product) {
       // 🔹 Validate category
-      const category = await this.CategoryRepository.findOne({ where: { categoryId } });
+      const category = await this.CategoryRepository.findOne({ where: { categoryId } })
       if (!category) {
-        throw new NotFoundException(`Category with ID ${categoryId} not found`);
+        throw new NotFoundException(`Category with ID ${categoryId} not found`)
       }
-  
+
       // 🔹 Validate brand
-      const brand = await this.BrandRepository.findOne({ where: { brandId } });
+      const brand = await this.BrandRepository.findOne({ where: { brandId } })
       if (!brand) {
-        throw new NotFoundException(`Brand with ID ${brandId} not found`);
+        throw new NotFoundException(`Brand with ID ${brandId} not found`)
       }
-  
+
       // 🔹 Create new product with `stock = quantity`
-      product = this.SkincareProductRepository.create({ ...productData, category, brand, stock: quantity });
-      product = await this.SkincareProductRepository.save(product);
+      product = this.SkincareProductRepository.create({ ...productData, category, brand, stock: quantity })
+      product = await this.SkincareProductRepository.save(product)
     } else {
       // 🔹 If product exists, update its stock
-      product.stock += quantity;
-      await this.SkincareProductRepository.save(product);
+      product.stock += quantity
+      await this.SkincareProductRepository.save(product)
     }
-  
+
     // 🔹 Add warehouse entry (Product Detail)
     const productDetail = this.SkincareProductDetailsRepository.create({
       productionDate,
       expirationDate,
       quantity,
-      product, // Link to product
-    });
-  
-    return this.SkincareProductDetailsRepository.save(productDetail);
+      product // Link to product
+    })
+
+    return this.SkincareProductDetailsRepository.save(productDetail)
   }
 
   async update(id: number, updateProductDto: UpdateProductDto) {
-    const product = await this.SkincareProductRepository.findOne({ where: { productId: id } });
+    const product = await this.SkincareProductRepository.findOne({ where: { productId: id } })
 
     if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
+      throw new NotFoundException(`Product with ID ${id} not found`)
     }
 
-    Object.assign(product, updateProductDto);
-    return this.SkincareProductRepository.save(product);
+    Object.assign(product, updateProductDto)
+    return this.SkincareProductRepository.save(product)
   }
 }
