@@ -1,38 +1,56 @@
-// import { SpacesServiceClient } from '@google-apps/meet';
-// import { Injectable } from '@nestjs/common';
-// import { InjectRepository } from '@nestjs/typeorm';
-// import { User } from 'src/typeorm/entities';
-// import { Repository } from 'typeorm';
-// import { GoogleAuth } from 'google-auth-library';
+import { Injectable } from '@nestjs/common'
+import { google } from 'googleapis'
+import * as fs from 'fs'
+import * as path from 'path'
 
-// @Injectable()
-// export class GgmeetService {
-//   constructor(
-//     @InjectRepository(User)
-//     private readonly userRepository: Repository<User>
-//   ) {}
 
-//   async createSpace() {
-//     // Authenticate using GoogleAuth
-//     const auth = new GoogleAuth({
-//       keyFilename: 'F:/FPT University/SPRING2025/SWD/swp391-milkmartsystem-0b8bf88e0580.json',
-//       scopes: ['https://www.googleapis.com/auth/meetings.space.create'],
-//     });
 
-//     // Get the authenticated client
-//     const authClient = await auth.getClient();
 
-//     // Create the Meet client and pass the correct authClient
-//     const meetClient = new SpacesServiceClient({
-//       authClient: authClient as any, // Temporary workaround for type issue
-//     });
 
-//     // Construct request
-//     const request = {};
+@Injectable()
+export class GoogleService {
+  private oauth2Client
+  private calendar
 
-//     // Run request
-//     const response = await meetClient.createSpace(request);
-//     console.log(`Meet URL: ${response[0].meetingUri}`);
-//     return response;
-//   }
-// }
+  constructor() {
+    
+  }
+
+
+
+  async createGoogleCalendarEvent() {
+    const listLink = ['meet.google.com/jrn-xekj-xds', 'meet.google.com/raj-ptww-nbv', 'meet.google.com/rxp-itdu-aeg']
+
+    try {
+      const randomLink = listLink[Math.floor(Math.random() * listLink.length)]
+      return randomLink
+    } catch (error) {
+      console.error('Error selecting random link:', error)
+      return 'https://meet.google.com/default'
+    }
+  }
+
+  
+  
+  checkAndReturnURL(url: any) {
+    const cleanURL = url.url
+    // if (typeof url !== 'string') {
+    //   console.log('Invalid URL:', url)
+    //   return null
+    // }
+  
+    const listLink = [
+      "meet.google.com/jrn-xekj-xds",
+      "meet.google.com/raj-ptww-nbv",
+      "meet.google.com/rxp-itdu-aeg"
+    ]
+  
+    // const cleanedUrl = url.trim().toLowerCase()
+    // console.log(`Checking URL: "${cleanedUrl}"`)
+  
+    const found = listLink.includes(cleanURL)
+    console.log('List contains:', found)
+  
+    return found ? cleanURL : null
+  }
+}
