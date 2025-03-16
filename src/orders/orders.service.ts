@@ -253,6 +253,24 @@ export class OrdersService {
     }
   }
 
+  async confirmReturnOrder(orderId: number) {
+    const order = await this.orderRepository.findOne({ where: { orderId } })
+    if (!order) {
+      throw new NotFoundException('Order not found')
+    }
+
+    if (order.status !== 'delivered') {
+      throw new BadRequestException('Order is not delivered to be returned')
+    }
+
+    await this.orderRepository.update({ orderId }, { status: 'ready to refund' })
+
+    return {
+      message: 'Order is returned',
+      orderId
+    }
+  }
+
   async refundOrder(orderId: number) {
     if (!orderId) {
       throw new BadRequestException('Order ID is required')
@@ -263,8 +281,8 @@ export class OrdersService {
       throw new NotFoundException('Order not found')
     } else if (order.status === 'refunded') {
       throw new BadRequestException('Order is already refunded')
-    } else if (order.status !== 'returned') {
-      throw new BadRequestException('Order is not returned to be refunded')
+    } else if (order.status !== 'ready to refund') {
+      throw new BadRequestException('Order is not ready to refund to be refunded')
     }
 
     await this.orderRepository.update({ orderId }, { status: 'refunded' })

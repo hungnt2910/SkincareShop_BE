@@ -38,6 +38,11 @@ export class OrdersController {
     return this.orderService.deliverOrder(orderId)
   }
 
+  @Put('confirmReturn/:orderId')
+  confirmReturnOrder(@Param('orderId') orderId: number) {
+    return this.orderService.confirmReturnOrder(orderId)
+  }
+
   @Put('refund/:orderId')
   refundOrder(@Param('orderId') orderId: number) {
     return this.orderService.refundOrder(orderId)
