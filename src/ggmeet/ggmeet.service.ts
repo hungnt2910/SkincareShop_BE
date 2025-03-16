@@ -3,13 +3,9 @@ import { google } from 'googleapis'
 import * as fs from 'fs'
 import * as path from 'path'
 
-const auth = new google.auth.OAuth2({
-  clientId: '51849457540-v768t7qlium5dj5p7obue7qc11ud1d2i.apps.googleusercontent.com',
-  clientSecret: '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',
-  redirectUri: 'http://localhost:5001/ggmeet'
-})
 
-const scopes = ['https://www.googleapis.com/auth/calendar']
+
+
 
 @Injectable()
 export class GoogleService {
@@ -17,20 +13,10 @@ export class GoogleService {
   private calendar
 
   constructor() {
-    this.oauth2Client = new google.auth.OAuth2({
-      clientId: '51849457540-v768t7qlium5dj5p7obue7qc11ud1d2i.apps.googleusercontent.com',
-      clientSecret: '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',
-      redirectUri: 'http://localhost:5001/ggmeet'
-    })
+    
   }
 
-  getAuthUrl() {
-    const authUrl = this.oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: ['https://www.googleapis.com/auth/calendar']
-    })
-    return authUrl
-  }
+
 
   async createGoogleCalendarEvent() {
     const listLink = ['meet.google.com/jrn-xekj-xds', 'meet.google.com/raj-ptww-nbv', 'meet.google.com/rxp-itdu-aeg']
