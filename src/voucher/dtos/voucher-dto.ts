@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer'
-import { IsNotEmpty, IsNumber, IsOptional, Max, MaxDate, Min } from 'class-validator'
+import { IsDate, IsNotEmpty, IsNumber, IsOptional, Max, MaxDate, Min, MinDate } from 'class-validator'
 
 export class createVoucherDto {
   @IsNotEmpty()
@@ -13,7 +13,7 @@ export class createVoucherDto {
   discount: number
 
   @IsNotEmpty()
-  @MaxDate(new Date(), { message: 'Expiration date cannot be in the future' })
+  @MinDate(new Date(), { message: 'Expiration date cannot be in the past' })
   expirationDate: Date
 }
 

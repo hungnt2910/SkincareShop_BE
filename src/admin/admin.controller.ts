@@ -6,6 +6,7 @@ import { Roles } from 'src/role/roles.decorator'
 import { AdminCreateUserDto } from './dtos/CreateUser.dto'
 
 @Controller('admin')
+// @UsePipes(new ValidationPipe({ whitelist: true }))
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 

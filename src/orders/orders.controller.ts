@@ -4,6 +4,7 @@ import { AuthGuard } from 'src/guards/auth.guard'
 
 @UseGuards(AuthGuard)
 @Controller('orders')
+// @UsePipes(new ValidationPipe({ whitelist: true }))
 export class OrdersController {
   constructor(private orderService: OrdersService) {}
 
@@ -37,8 +38,43 @@ export class OrdersController {
     return this.orderService.deliverOrder(orderId)
   }
 
+  @Put('confirmReturn/:orderId')
+  confirmReturnOrder(@Param('orderId') orderId: number) {
+    return this.orderService.confirmReturnOrder(orderId)
+  }
+
   @Put('refund/:orderId')
   refundOrder(@Param('orderId') orderId: number) {
     return this.orderService.refundOrder(orderId)
+  }
+
+  @Get('getRefundedOrderByUser/:userId')
+  getRefundedOrderByUser(@Param('userId') userId: number) {
+    return this.orderService.getRefundedOrderByUser(userId)
+  }
+
+  @Get('getReturnedOrderByUser/:userId')
+  getReturnedOrderByUser(@Param('userId') userId: number) {
+    return this.orderService.getReturnedOrderByUser(userId)
+  }
+
+  @Get('getDeliveredOrderByUser/:userId')
+  getDeliveredOrderByUser(@Param('userId') userId: number) {
+    return this.orderService.getDeliveredOrderByUser(userId)
+  }
+
+  @Get('getConfirmedOrderByUser/:userId')
+  getConfirmedOrderByUser(@Param('userId') userId: number) {
+    return this.orderService.getConfirmedOrderByUser(userId)
+  }
+
+  @Get('getPendingOrderByUser/:userId')
+  getPendingOrderByUser(@Param('userId') userId: number) {
+    return this.orderService.getPendingOrderByUser(userId)
+  }
+
+  @Get('getPaidOrderByUser/:userId')
+  getPaidOrderByUser(@Param('userId') userId: number) {
+    return this.orderService.getPaidOrderByUser(userId)
   }
 }
