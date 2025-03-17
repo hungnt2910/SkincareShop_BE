@@ -23,19 +23,28 @@ export class SkincareProductService {
   }
 
   async getProductById(productId: number) {
-    console.log(productId)
+    console.log(productId);
+    
     const product = await this.SkincareProductRepository.findOne({
       where: { productId },
-      relations: ['category']
-    })
-
-    console.log(product)
+      relations: ['category', 'brand'], // Include brand relation
+    });
+    
     if (!product) {
-      throw new NotFoundException('Product is not found')
+      throw new NotFoundException('Product is not found');
     }
-    const relateProduct = await this.SkincareProductRepository.find({ where: { category: product?.category } })
-    return { ...product, relatedProduct: relateProduct }
+  
+    const relatedProducts = await this.SkincareProductRepository.find({ 
+      where: { category: product?.category } 
+    });
+  
+    return { 
+      ...product, 
+      brandName: product.brand?.brandName, // Extract brand name
+      relatedProducts 
+    };
   }
+  
 
   async removeProduct(productId) {
     const result: UpdateResult = await this.SkincareProductRepository.update(productId, { isActive: false })
