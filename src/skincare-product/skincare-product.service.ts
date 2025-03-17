@@ -48,7 +48,8 @@ export class SkincareProductService {
   
     return { 
       ...product, 
-      brandName: product.brand?.brandName, // Extract brand name
+      brandName: product.brand?.brandName, 
+      categoryName: product.category?.name, // Extract brand name
       relatedProducts 
     };
   }
