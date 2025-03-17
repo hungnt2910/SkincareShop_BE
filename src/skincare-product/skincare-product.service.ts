@@ -19,8 +19,16 @@ export class SkincareProductService {
   ) {}
 
   async getAllProduct() {
-    return this.SkincareProductRepository.find()
+    const products = await this.SkincareProductRepository.find({
+      relations: ['category'], // Include category relation
+    });
+  
+    return products.map(product => ({
+      ...product,
+      categoryName: product.category?.name, // Extract category name
+    }));
   }
+  
 
   async getProductById(productId: number) {
     console.log(productId);
