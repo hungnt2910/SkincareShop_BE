@@ -19,8 +19,16 @@ export class SkincareProductService {
   ) {}
 
   async getAllProduct() {
-    return this.SkincareProductRepository.find()
+    const products = await this.SkincareProductRepository.find({
+      relations: ['category'], // Include category relation
+    });
+  
+    return products.map(product => ({
+      ...product,
+      categoryName: product.category?.name, // Extract category name
+    }));
   }
+  
 
   async getProductById(productId: number) {
     console.log(productId);
@@ -40,7 +48,8 @@ export class SkincareProductService {
   
     return { 
       ...product, 
-      brandName: product.brand?.brandName, // Extract brand name
+      brandName: product.brand?.brandName, 
+      categoryName: product.category?.name, // Extract brand name
       relatedProducts 
     };
   }
