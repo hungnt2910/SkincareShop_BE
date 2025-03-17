@@ -17,9 +17,10 @@ import { BrandModule } from './brand/brand.module'
 import { PaymentModule } from './payment/payment.module'
 import { SkincareRouteModule } from './skincare-route/skincare-route.module'
 import { VoucherModule } from './voucher/voucher.module'
-import { GgmeetModule } from './ggmeet/ggmeet.module';
-import { DashboardModule } from './dashboard/dashboard.module';
-import { ReviewsModule } from './reviews/reviews.module';
+import { GgmeetModule } from './ggmeet/ggmeet.module'
+import { DashboardModule } from './dashboard/dashboard.module'
+import { ReviewsModule } from './reviews/reviews.module'
+import { BlogModule } from './blog/blog.module'
 import * as entities from './typeorm/entities'
 
 @Module({
@@ -59,12 +60,9 @@ import * as entities from './typeorm/entities'
     SkincareRouteModule,
     VoucherModule,
     DashboardModule,
-<<<<<<< HEAD
-    GgmeetModule
-=======
-    ReviewsModule
-    // GgmeetModule
->>>>>>> 2efcefec5b6d79705919d9c8fe7f3e05d993cfb0
+
+    GgmeetModule,
+    BlogModule
   ],
   controllers: [AppController],
   providers: [AppService]
