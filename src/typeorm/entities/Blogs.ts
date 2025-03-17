@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm";
 import { User } from "./User";
+import { SkincareProduct } from "./SkincareProduct";
 
 @Entity()
 export class Blogs {
@@ -21,4 +22,8 @@ export class Blogs {
 
     @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
     postDate: Date;
+
+    @ManyToOne(() => SkincareProduct, product => product.productId, { nullable: true })
+    @JoinColumn({ name: 'product_id' })
+    product: SkincareProduct;
 }
