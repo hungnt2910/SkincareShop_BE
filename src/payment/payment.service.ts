@@ -67,7 +67,7 @@ export class PaymentService {
     const transId = orderResult.orderId
     const appTransId = `${moment().format('YYMMDD')}_${transId}`
     const embedData = {
-      redirecturl: 'https://docs.zalopay.vn/v1/start/'
+      redirecturl: 'https://localhost:3000/orders'
     }
 
     const order = {
