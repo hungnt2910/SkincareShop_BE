@@ -8,6 +8,7 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get()
+  @Roles('Admin')
   @UseGuards(AuthGuard)
   async getDashboard(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
     if (!startDate || !endDate || !/^\d{2}-\d{2}-\d{4}$/.test(startDate) || !/^\d{2}-\d{2}-\d{4}$/.test(endDate)) {

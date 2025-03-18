@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, ParseIntPipe, Post, UsePipes, ValidationPipe } from '@nestjs/common'
 import { SkincareRouteService } from './skincare-route.service'
 import { CreateSkincareRoutineDto } from './dtos/create-skincare-routine.dto'
 
 @Controller('skincare-route')
-// @UsePipes(new ValidationPipe({ whitelist: true }))
+@UsePipes(new ValidationPipe({ whitelist: true }))
 export class SkincareRouteController {
   constructor(private readonly skincareRouteService: SkincareRouteService) {}
 

@@ -32,7 +32,7 @@ export class DashboardService {
         .createQueryBuilder('order')
         .where('order.timestamp BETWEEN :start AND :end', { start, end })
         .andWhere('order.status IN (:...statuses)', {
-          statuses: ['Paid', 'Delivered', 'Completed', 'Confirmed']
+          statuses: ['paid', 'delivered', 'pending', 'confirmed', 'returned', 'refunded']
         })
         .getCount()
 
@@ -42,7 +42,7 @@ export class DashboardService {
         .select('SUM(order.amount)', 'totalRevenue')
         .where('order.timestamp BETWEEN :start AND :end', { start, end })
         .andWhere('order.status IN (:...statuses)', {
-          statuses: ['Paid', 'Delivered', 'Completed', 'Confirmed']
+          statuses: ['paid', 'delivered', 'pending', 'confirmed', 'returned', 'refunded']
         })
         .getRawOne()
 
@@ -57,7 +57,7 @@ export class DashboardService {
         .addSelect('SUM(orderItem.quantity)', 'totalSold')
         .where('order.timestamp BETWEEN :start AND :end', { start, end })
         .andWhere('order.status IN (:...statuses)', {
-          statuses: ['Paid', 'Delivered', 'Completed', 'Confirmed']
+          statuses: ['paid', 'delivered', 'pending', 'confirmed', 'returned', 'refunded']
         })
         .groupBy('brand.brandId, brand.brandName')
         .orderBy('SUM(orderItem.quantity)', 'DESC')
@@ -71,17 +71,17 @@ export class DashboardService {
         .addSelect('COUNT(*)', 'successfulOrders')
         .where('order.timestamp BETWEEN :start AND :end', { start, end })
         .andWhere('order.status IN (:...statuses)', {
-          statuses: ['Paid', 'Delivered', 'Completed', 'Confirmed']
+          statuses: ['paid', 'delivered', 'confirmed']
         })
         .groupBy('yearMonth')
         .orderBy('yearMonth', 'ASC')
         .getRawMany()
 
       // Canceled Orders Per Month
-      const canceledOrdersPerMonth = await this.orderRepository
+      const returnedOrdersPerMonth = await this.orderRepository
         .createQueryBuilder('order')
         .where('order.timestamp BETWEEN :start AND :end', { start, end })
-        .andWhere('order.status = :status', { status: 'Cancelled' })
+        .andWhere('order.status = :status', { status: 'returned' })
         .getCount()
 
       // Revenue Per Period (Daily or Monthly)
@@ -93,7 +93,7 @@ export class DashboardService {
           .addSelect('SUM(order.amount)', 'totalRevenue')
           .where('order.timestamp BETWEEN :start AND :end', { start, end })
           .andWhere('order.status IN (:...statuses)', {
-            statuses: ['Paid', 'Delivered', 'Completed', 'Confirmed']
+            statuses: ['paid', 'delivered', 'confirmed']
           })
           .groupBy('periodMonth')
           .orderBy('periodMonth', 'ASC')
@@ -105,7 +105,7 @@ export class DashboardService {
           .addSelect('SUM(order.amount)', 'totalRevenue')
           .where('order.timestamp BETWEEN :start AND :end', { start, end })
           .andWhere('order.status IN (:...statuses)', {
-            statuses: ['Paid', 'Delivered', 'Completed', 'Confirmed']
+            statuses: ['paid', 'delivered', 'confirmed']
           })
           .groupBy('periodMonth')
           .orderBy('periodMonth', 'ASC')
@@ -117,7 +117,7 @@ export class DashboardService {
         totalRevenue: totalRevenue.totalRevenue || 0,
         topProducts,
         successfulOrdersPerMonth,
-        canceledOrdersPerMonth,
+        returnedOrdersPerMonth,
         totalRevenuePerPeriod
       }
     } catch (error) {

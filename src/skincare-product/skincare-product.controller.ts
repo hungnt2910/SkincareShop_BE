@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post, Put, Query, UsePipes, ValidationPipe } from '@nestjs/common'
 import { SkincareProductService } from './skincare-product.service'
 import { CreateProductWithDetailsDto } from './dtos/AddProduct.dto'
 import { UpdateProductDto } from './dtos/update-product.dto'
 
 @Controller('skincare-product')
-// @UsePipes(new ValidationPipe({ whitelist: true }))
+@UsePipes(new ValidationPipe({ whitelist: true }))
 export class SkincareProductController {
   constructor(private readonly SkincareProductService: SkincareProductService) {}
 

@@ -17,6 +17,14 @@ export class UsersService {
     return user
   }
 
+  async getCustomer() {
+    const user = await this.userRepository.find({where: {role: {roleId: 2}}})
+    if (!user) {
+      throw new NotFoundException('User not found')
+    }
+    return user;
+  }
+
   async updateUserProfile(userInfo: updateUserProfileDto, userId: number) {
     const user = await this.findUser(userId)
 

@@ -4,7 +4,7 @@ import { VoucherService } from './voucher.service'
 import { applyVoucherDto, claimVoucherDto, createVoucherDto, updateVoucherDto } from './dtos/voucher-dto'
 
 @Controller('voucher')
-// @UsePipes(new ValidationPipe({ whitelist: true }))
+@UsePipes(new ValidationPipe({ whitelist: true }))
 export class VoucherController {
   constructor(private voucherService: VoucherService) {}
 
