@@ -15,7 +15,8 @@ export class AdminService {
 
   async getAllUser() {
     return await this.userRepository.find({
-      where: { role: Not(1) }
+      where: { role: Not(1) },
+      relations: ['role']
     })
   }
 
