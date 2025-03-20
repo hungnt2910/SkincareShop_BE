@@ -20,40 +20,38 @@ export class SkincareProductService {
 
   async getAllProduct() {
     const products = await this.SkincareProductRepository.find({
-      relations: ['category'], // Include category relation
-    });
-  
-    return products.map(product => ({
+      relations: ['category'] // Include category relation
+    })
+
+    return products.map((product) => ({
       ...product,
-      categoryName: product.category?.name, // Extract category name
-    }));
+      categoryName: product.category?.name // Extract category name
+    }))
   }
-  
 
   async getProductById(productId: number) {
-    console.log(productId);
-    
+    console.log(productId)
+
     const product = await this.SkincareProductRepository.findOne({
       where: { productId },
-      relations: ['category', 'brand'], // Include brand relation
-    });
-    
+      relations: ['category', 'brand'] // Include brand relation
+    })
+
     if (!product) {
-      throw new NotFoundException('Product is not found');
+      throw new NotFoundException('Product is not found')
     }
-  
-    const relatedProducts = await this.SkincareProductRepository.find({ 
-      where: { category: product?.category } 
-    });
-  
-    return { 
-      ...product, 
-      brandName: product.brand?.brandName, 
+
+    const relatedProducts = await this.SkincareProductRepository.find({
+      where: { category: product?.category }
+    })
+
+    return {
+      ...product,
+      brandName: product.brand?.brandName,
       categoryName: product.category?.name, // Extract brand name
-      relatedProducts 
-    };
+      relatedProducts
+    }
   }
-  
 
   async removeProduct(productId) {
     const result: UpdateResult = await this.SkincareProductRepository.update(productId, { isActive: false })
@@ -130,5 +128,16 @@ export class SkincareProductService {
 
     Object.assign(product, updateProductDto)
     return this.SkincareProductRepository.save(product)
+  }
+
+  async compareProduct(product1Id: number, product2Id: number) {
+    const product1 = await this.SkincareProductRepository.findOne({ where: { productId: product1Id } })
+    const product2 = await this.SkincareProductRepository.findOne({ where: { productId: product2Id } })
+
+    if (!product1 || !product2) {
+      throw new NotFoundException(`Product not found`)
+    }
+
+    return { product1, product2 }
   }
 }
