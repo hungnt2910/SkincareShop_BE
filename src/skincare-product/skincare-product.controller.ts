@@ -44,4 +44,9 @@ export class SkincareProductController {
   updateProduct(@Param('id') productId: number, @Body() updateProductDto: UpdateProductDto) {
     return this.SkincareProductService.update(productId, updateProductDto)
   }
+
+  @Get('compare')
+  compareProduct(@Query() query: any) {
+    return this.SkincareProductService.compareProduct(query.productId1, query.productId2)
+  }
 }
