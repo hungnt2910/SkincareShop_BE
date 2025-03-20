@@ -73,6 +73,11 @@ export class BlogsService {
       blog.product = product
     }
 
+    // Only update image_url if it exists in dto
+    if (dto.image_url) {
+      blog.imageUrl = dto.image_url
+    }
+
     Object.assign(blog, dto)
     await this.blogsRepository.save(blog)
 

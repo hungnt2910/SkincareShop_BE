@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { GgmeetController } from './ggmeet.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/typeorm/entities';
-import { GoogleService } from './ggmeet.service';
+import { GoogleMeetService } from './ggmeet.service';
+import { Meet } from 'src/typeorm/entities/Meet';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User])],
+  imports: [TypeOrmModule.forFeature([User, Meet])],
   controllers: [GgmeetController],
-  providers: [GoogleService]
+  providers: [GoogleMeetService]
 })
 export class GgmeetModule {}

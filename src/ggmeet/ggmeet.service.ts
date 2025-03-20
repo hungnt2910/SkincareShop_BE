@@ -1,58 +1,59 @@
-import { Injectable } from '@nestjs/common'
-import { google } from 'googleapis'
-import * as fs from 'fs'
-import * as path from 'path'
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/typeorm/entities'
+import { Meet } from 'src/typeorm/entities/Meet';
+import { Repository } from 'typeorm';
+
+
 
 @Injectable()
-export class GoogleService {
-  private oauth2Client
-  private calendar
+export class GoogleMeetService {
+  constructor(
+    @InjectRepository(Meet)
+    private readonly googleMeetRepository: Repository<Meet>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
-  constructor() {}
+  private meetLinks = [
+    'meet.google.com/jrn-xekj-xds',
+    'meet.google.com/raj-ptww-nbv',
+    'meet.google.com/rxp-itdu-aeg',
+    'meet.google.com/apo-nqvf-rnu',
+    'meet.google.com/eee-gudk-xck',
+    'meet.google.com/vgy-brwy-fpn',
+    'meet.google.com/oqz-eisq-nwr',
+  ];
 
-  async createGoogleCalendarEvent() {
-    const listLink = [
-      'meet.google.com/jrn-xekj-xds',
-      'meet.google.com/raj-ptww-nbv',
-      'meet.google.com/rxp-itdu-aeg',
-      'meet.google.com/apo-nqvf-rnu',
-      'meet.google.com/eee-gudk-xck',
-      'meet.google.com/vgy-brwy-fpn',
-      'meet.google.com/oqz-eisq-nwr'
-    ]
-
+  async createGoogleMeetLink(userId: number): Promise<Meet> {
     try {
-      const randomLink = listLink[Math.floor(Math.random() * listLink.length)]
-      return randomLink
+      const randomLink = this.meetLinks[Math.floor(Math.random() * this.meetLinks.length)];
+      const googleMeetLink = this.googleMeetRepository.create({
+        link: randomLink,
+        user: { id: userId },
+      });
+
+      return await this.googleMeetRepository.save(googleMeetLink);
     } catch (error) {
-      console.error('Error selecting random link:', error)
-      return 'https://meet.google.com/default'
+      console.error('Error creating Google Meet link:', error);
+      throw new Error('Failed to create Google Meet link');
     }
   }
 
-  checkAndReturnURL(url: any) {
-    const cleanURL = url.url
-    // if (typeof url !== 'string') {
-    //   console.log('Invalid URL:', url)
-    //   return null
-    // }
+  async assignStaffToMeetLink(userId: number, staffId: number): Promise<string | null> {
+    try {
+      const meetLink = await this.googleMeetRepository.findOne({ where: { user: { id: userId } } });
+      if (!meetLink) {
+        console.error('No Google Meet link found for this user');
+        return null;
+      }
 
-    const listLink = [
-      'meet.google.com/jrn-xekj-xds',
-      'meet.google.com/raj-ptww-nbv',
-      'meet.google.com/rxp-itdu-aeg',
-      'meet.google.com/apo-nqvf-rnu',
-      'meet.google.com/eee-gudk-xck',
-      'meet.google.com/vgy-brwy-fpn',
-      'meet.google.com/oqz-eisq-nwr'
-    ]
-
-    // const cleanedUrl = url.trim().toLowerCase()
-    // console.log(`Checking URL: "${cleanedUrl}"`)
-
-    const found = listLink.includes(cleanURL)
-    console.log('List contains:', found)
-
-    return found ? cleanURL : null
+      meetLink.staff = { id: staffId } as User;
+      await this.googleMeetRepository.save(meetLink);
+      return meetLink.link;
+    } catch (error) {
+      console.error('Error assigning staff to Google Meet link:', error);
+      return null;
+    }
   }
 }

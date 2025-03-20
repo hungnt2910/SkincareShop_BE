@@ -64,6 +64,15 @@ export class SeederService implements OnModuleInit {
     //       email: 'user@example.com',
     //       status: true,
     //       role: { roleId: 2 } // User role
+    //     },
+    //       id: 3,
+    //       username: 'staff_user',
+    //       password: await bcrypt.hash('staff123', 10), // Hash password
+    //       phone: '0987654321',
+    //       address: '456 User Rd',
+    //       email: 'staff@example.com',
+    //       status: true,
+    //       role: { roleId: 3 } // User role
     //     }
     //   ]
     //   for (const user of users) {
@@ -225,22 +234,6 @@ export class SeederService implements OnModuleInit {
     //     }
     //     await this.productRepository.save(products)
     //     console.log('✅ 100 Skincare Products with Images seeded successfully!')
-    // const skincareProducts = await this.productRepository.find()
-    // const productDetails: SkincareProductDetails[] = []
-    // for (const product of skincareProducts) {
-    //   const productionDate = new Date()
-    //   productionDate.setMonth(productionDate.getMonth() - Math.floor(Math.random() * 12))
-    //   const expirationDate = new Date(productionDate)
-    //   expirationDate.setFullYear(expirationDate.getFullYear() + 2)
-    //   const productDetail = new SkincareProductDetails()
-    //   productDetail.product = product
-    //   productDetail.productionDate = productionDate
-    //   productDetail.expirationDate = expirationDate
-    //   productDetail.quantity = Math.floor(Math.random() * 100) + 20
-    //   productDetails.push(productDetail)
-    // }
-    // await this.skincareProductDetailsRepository.save(productDetails)
-    // console.log('Seeder data for product details inserted')
     //     const quizData = [
     //       {
     //         title: 'Vào mỗi buổi sáng thức dậy, bạn thấy da mình thế nào ?',
@@ -300,5 +293,21 @@ export class SeederService implements OnModuleInit {
     //     }
     //   }
     //   console.log('✅ SkinType seeding completed!')
+    //     const skincareProducts = await this.productRepository.find()
+    // const productDetails: SkincareProductDetails[] = []
+    // for (const product of skincareProducts) {
+    //   const productionDate = new Date()
+    //   productionDate.setMonth(productionDate.getMonth() - Math.floor(Math.random() * 12))
+    //   const expirationDate = new Date(productionDate)
+    //   expirationDate.setFullYear(expirationDate.getFullYear() + 2)
+    //   const productDetail = new SkincareProductDetails()
+    //   productDetail.product = product
+    //   productDetail.productionDate = productionDate
+    //   productDetail.expirationDate = expirationDate
+    //   productDetail.quantity = Math.floor(Math.random() * 100) + 20
+    //   productDetails.push(productDetail)
+    // }
+    // await this.skincareProductDetailsRepository.save(productDetails)
+    // console.log('Seeder data for product details inserted')
   }
 }

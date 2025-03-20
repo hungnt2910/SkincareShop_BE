@@ -1,18 +1,19 @@
-import { Body, Controller, Get, Post } from '@nestjs/common'
-import { GoogleService } from './ggmeet.service'
+import { Body, Controller, Get, Param, Post } from '@nestjs/common'
+import { GoogleMeetService } from './ggmeet.service'
 
 @Controller('ggmeet')
 export class GgmeetController {
-  constructor(private readonly googleService: GoogleService) {}
+  constructor(private readonly googleService: GoogleMeetService) {}
 
-  @Get('meet')
-  async createMeetLink() {
-    const meetLink = await this.googleService.createGoogleCalendarEvent()
+  @Post('meet/:id')
+  async createMeetLink(@Param('id') id: number) {
+    console.log(id)
+    const meetLink = await this.googleService.createGoogleMeetLink(id)
     return { meetLink }
   }
 
   @Post('getMeet')
-  async getMeetForStaff(@Body() url: string) {
-    return this.googleService.checkAndReturnURL(url)
+  async getMeetForStaff(@Body() userId: number, staffId: number) {
+    return this.googleService.assignStaffToMeetLink(userId, staffId )
   }
 }
