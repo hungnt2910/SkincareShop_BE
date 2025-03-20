@@ -13,8 +13,7 @@ export class createVoucherDto {
   discount: number
 
   @IsNotEmpty()
-  @Type(() => Date)
-  @MinDate(() => new Date(), { message: 'Expiration date cannot be in the past' })
+  @MinDate(new Date(), { message: 'Expiration date cannot be in the past' })
   expirationDate: Date
 }
 
@@ -24,9 +23,8 @@ export class updateVoucherDto {
   discount?: number
 
   @IsOptional()
-  @Type(() => Date)
-  @MinDate(() => new Date(), { message: 'Expiration date cannot be in the past' })
-  expirationDate?: Date
+  @MaxDate(new Date(), { message: 'Expiration date cannot be in the future' })
+  expirationDate: Date
 }
 
 export class claimVoucherDto {
