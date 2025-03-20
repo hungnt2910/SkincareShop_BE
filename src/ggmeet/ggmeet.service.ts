@@ -31,6 +31,7 @@ export class GoogleMeetService {
       const googleMeetLink = this.googleMeetRepository.create({
         link: randomLink,
         user: { id: userId },
+        staff: null,
       });
 
       return await this.googleMeetRepository.save(googleMeetLink);
