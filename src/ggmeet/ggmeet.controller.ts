@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common'
 import { GoogleMeetService } from './ggmeet.service'
+import { AssignStaff } from './dtos/assignStaff'
 
 @Controller('ggmeet')
 export class GgmeetController {
@@ -13,7 +14,7 @@ export class GgmeetController {
   }
 
   @Post('getMeet')
-  async getMeetForStaff(@Body() userId: number, staffId: number) {
-    return this.googleService.assignStaffToMeetLink(userId, staffId )
+  async getMeetForStaff(@Body() assignStaff: AssignStaff) {
+    return this.googleService.assignStaffToMeetLink(assignStaff)
   }
 }
