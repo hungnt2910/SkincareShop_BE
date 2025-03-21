@@ -1,10 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
 import { User } from 'src/typeorm/entities'
-import { Meet } from 'src/typeorm/entities/Meet';
-import { Repository } from 'typeorm';
-
-
+import { Meet } from 'src/typeorm/entities/Meet'
+import { Repository } from 'typeorm'
+import { AssignStaff } from './dtos/assignStaff'
 
 @Injectable()
 export class GoogleMeetService {
@@ -12,7 +11,7 @@ export class GoogleMeetService {
     @InjectRepository(Meet)
     private readonly googleMeetRepository: Repository<Meet>,
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly userRepository: Repository<User>
   ) {}
 
   private meetLinks = [
@@ -22,39 +21,54 @@ export class GoogleMeetService {
     'meet.google.com/apo-nqvf-rnu',
     'meet.google.com/eee-gudk-xck',
     'meet.google.com/vgy-brwy-fpn',
-    'meet.google.com/oqz-eisq-nwr',
-  ];
+    'meet.google.com/oqz-eisq-nwr'
+  ]
 
   async createGoogleMeetLink(userId: number): Promise<Meet> {
     try {
-      const randomLink = this.meetLinks[Math.floor(Math.random() * this.meetLinks.length)];
+      const randomLink = this.meetLinks[Math.floor(Math.random() * this.meetLinks.length)]
       const googleMeetLink = this.googleMeetRepository.create({
         link: randomLink,
-        user: { id: userId },
-        staff: null,
-      });
+        user: { id: userId }
+      })
 
-      return await this.googleMeetRepository.save(googleMeetLink);
+      return await this.googleMeetRepository.save(googleMeetLink)
     } catch (error) {
-      console.error('Error creating Google Meet link:', error);
-      throw new Error('Failed to create Google Meet link');
+      console.error('Error creating Google Meet link:', error)
+      throw new Error('Failed to create Google Meet link')
     }
   }
 
-  async assignStaffToMeetLink(userId: number, staffId: number): Promise<string | null> {
+  async assignStaffToMeetLink(assignStaff: AssignStaff): Promise<string | null> {
     try {
-      const meetLink = await this.googleMeetRepository.findOne({ where: { user: { id: userId } } });
+      // Find the Meet record for the user
+      const meetLink = await this.googleMeetRepository.findOne({
+        where: { user: { id: assignStaff.user_id } } // Properly formatted query
+      })
+
+      console.log(meetLink)
+
       if (!meetLink) {
-        console.error('No Google Meet link found for this user');
-        return null;
+        console.error('No Google Meet link found for this user')
+        return null
       }
 
-      meetLink.staff = { id: staffId } as User;
-      await this.googleMeetRepository.save(meetLink);
-      return meetLink.link;
+      // Fetch staff separately from User table
+      const staff = await this.userRepository.findOne({ where: { id: assignStaff.staff_id } })
+
+      if (!staff) {
+        console.error('Staff not found in User table')
+        return null
+      }
+
+      // Assign staff and save the update
+      meetLink.staff = staff
+      await this.googleMeetRepository.save(meetLink)
+
+      return meetLink.link
     } catch (error) {
-      console.error('Error assigning staff to Google Meet link:', error);
-      return null;
+      console.error('Error assigning staff to Google Meet link:', error)
+      return null
     }
   }
 }
