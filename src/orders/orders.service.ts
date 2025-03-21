@@ -170,11 +170,26 @@ export class OrdersService {
     }
   }
 
-  async readyReturnOrderDetail(returnOrderDetailDto: ReturnOrderDetailDto) {
+  async readyReturnOrderDetail(returnOrderDetailDto: ReturnOrderDetailDto, orderId: number) {
     const user = await this.userRepository.findOne({ where: { id: returnOrderDetailDto.user_id } })
     if (!user) {
       throw new NotFoundException('User not found')
     }
+
+    const returningOrder = await this.orderRepository.update({ orderId }, { status: 'returned' })
+     const order = await this.orderRepository.findOne({ where: { orderId } })
+ 
+     if (!returningOrder) {
+       throw new NotFoundException('Order not found')
+     }
+ 
+     if (!order) {
+       throw new NotFoundException('Order not found')
+     }
+ 
+     if (order.status === 'returned') {
+       throw new BadRequestException('Order is already returned')
+     }
 
     const returnOrder = new Orders()
     returnOrder.customer = user

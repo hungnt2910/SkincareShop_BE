@@ -1,10 +1,10 @@
-import { Controller, Get, Param, UseGuards, Post, Body, Put } from '@nestjs/common'
+import { Controller, Get, Param, UseGuards, Post, Body, Put, UsePipes, ValidationPipe } from '@nestjs/common'
 import { OrdersService } from './orders.service'
 import { AuthGuard } from 'src/guards/auth.guard'
 
 @UseGuards(AuthGuard)
 @Controller('orders')
-// @UsePipes(new ValidationPipe({ whitelist: true }))
+@UsePipes(new ValidationPipe({ whitelist: true }))
 export class OrdersController {
   constructor(private orderService: OrdersService) {}
 
@@ -24,8 +24,8 @@ export class OrdersController {
   }
 
   @Post('return')
-  readyReturnOrderDetail(@Body() returnOrderDetailDto) {
-    return this.orderService.readyReturnOrderDetail(returnOrderDetailDto)
+  readyReturnOrderDetail(@Body() returnOrderDetailDto, orderId: number) {
+    return this.orderService.readyReturnOrderDetail(returnOrderDetailDto, orderId)
   }
 
   @Put('confirm/:orderId')
