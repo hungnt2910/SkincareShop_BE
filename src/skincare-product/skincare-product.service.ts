@@ -20,40 +20,38 @@ export class SkincareProductService {
 
   async getAllProduct() {
     const products = await this.SkincareProductRepository.find({
-      relations: ['category'], // Include category relation
-    });
-  
-    return products.map(product => ({
+      relations: ['category'] // Include category relation
+    })
+
+    return products.map((product) => ({
       ...product,
-      categoryName: product.category?.name, // Extract category name
-    }));
+      categoryName: product.category?.name // Extract category name
+    }))
   }
-  
 
   async getProductById(productId: number) {
-    console.log(productId);
-    
+    console.log(productId)
+
     const product = await this.SkincareProductRepository.findOne({
       where: { productId },
-      relations: ['category', 'brand'], // Include brand relation
-    });
-    
+      relations: ['category', 'brand'] // Include brand relation
+    })
+
     if (!product) {
-      throw new NotFoundException('Product is not found');
+      throw new NotFoundException('Product is not found')
     }
-  
-    const relatedProducts = await this.SkincareProductRepository.find({ 
-      where: { category: product?.category } 
-    });
-  
-    return { 
-      ...product, 
-      brandName: product.brand?.brandName, 
+
+    const relatedProducts = await this.SkincareProductRepository.find({
+      where: { category: product?.category }
+    })
+
+    return {
+      ...product,
+      brandName: product.brand?.brandName,
       categoryName: product.category?.name, // Extract brand name
-      relatedProducts 
-    };
+      relatedProducts
+    }
   }
-  
 
   async removeProduct(productId) {
     const result: UpdateResult = await this.SkincareProductRepository.update(productId, { isActive: false })
@@ -130,5 +128,96 @@ export class SkincareProductService {
 
     Object.assign(product, updateProductDto)
     return this.SkincareProductRepository.save(product)
+  }
+
+  async getProductSales(productId: number) {
+    const product = await this.SkincareProductRepository.findOne({ where: { productId } })
+
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${productId} not found`)
+    }
+
+    const result = await this.SkincareProductRepository.createQueryBuilder('product')
+      .leftJoin('product.orderDetails', 'orderDetail')
+      .select([
+        'SUM(orderDetail.quantity) as totalQuantity',
+        'SUM(orderDetail.price * orderDetail.quantity) as totalRevenue'
+      ])
+      .where('product.productId = :productId', { productId })
+      .getRawOne()
+
+    return {
+      productId,
+      productName: product.productName,
+      totalQuantity: result?.totalQuantity || 0,
+      totalRevenue: result?.totalRevenue || 0
+    }
+  }
+
+  async compareProducts(productId1: number, productId2: number) {
+    // 🔹 Retrieve both products
+    const product1 = await this.SkincareProductRepository.findOne({
+      where: { productId: productId1 },
+      relations: ['category', 'brand', 'reviews']
+    })
+
+    const product2 = await this.SkincareProductRepository.findOne({
+      where: { productId: productId2 },
+      relations: ['category', 'brand', 'reviews']
+    })
+
+    if (!product1 || !product2) {
+      throw new NotFoundException('One or both products not found')
+    }
+
+    // 🔹 Get sales data for both products
+    const sales1 = await this.SkincareProductRepository.createQueryBuilder('product')
+      .leftJoin('product.orderDetails', 'orderDetail')
+      .select('SUM(orderDetail.quantity)', 'totalQuantity')
+      .where('product.productId = :productId', { productId: productId1 })
+      .getRawOne()
+
+    const sales2 = await this.SkincareProductRepository.createQueryBuilder('product')
+      .leftJoin('product.orderDetails', 'orderDetail')
+      .select('SUM(orderDetail.quantity)', 'totalQuantity')
+      .where('product.productId = :productId', { productId: productId2 })
+      .getRawOne()
+
+    // 🔹 Get average review ratings
+    const averageRating1 = product1.reviews.length
+      ? product1.reviews.reduce((sum, review) => sum + review.rating, 0) / product1.reviews.length
+      : 0
+
+    const averageRating2 = product2.reviews.length
+      ? product2.reviews.reduce((sum, review) => sum + review.rating, 0) / product2.reviews.length
+      : 0
+
+    // 🔹 Format comparison data
+    return {
+      product1: {
+        productId: product1.productId,
+        productName: product1.productName,
+        category: product1.category?.name,
+        brand: product1.brand?.brandName,
+        stock: product1.stock,
+        price: product1.price,
+        totalSold: sales1?.totalQuantity || 0,
+        averageRating: averageRating1.toFixed(1),
+        description: product1.description,
+        urlImage: product1.urlImage
+      },
+      product2: {
+        productId: product2.productId,
+        productName: product2.productName,
+        category: product2.category?.name,
+        brand: product2.brand?.brandName,
+        stock: product2.stock,
+        price: product2.price,
+        totalSold: sales2?.totalQuantity || 0,
+        averageRating: averageRating2.toFixed(1),
+        description: product2.description,
+        urlImage: product2.urlImage
+      }
+    }
   }
 }
