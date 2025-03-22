@@ -177,19 +177,19 @@ export class OrdersService {
     }
 
     const returningOrder = await this.orderRepository.update({ orderId }, { status: 'returned' })
-     const order = await this.orderRepository.findOne({ where: { orderId } })
- 
-     if (!returningOrder) {
-       throw new NotFoundException('Order not found')
-     }
- 
-     if (!order) {
-       throw new NotFoundException('Order not found')
-     }
- 
-     if (order.status === 'returned') {
-       throw new BadRequestException('Order is already returned')
-     }
+    const order = await this.orderRepository.findOne({ where: { orderId } })
+
+    if (!returningOrder) {
+      throw new NotFoundException('Order not found')
+    }
+
+    if (!order) {
+      throw new NotFoundException('Order not found')
+    }
+
+    if (order.status === 'returned') {
+      throw new BadRequestException('Order is already returned')
+    }
 
     const returnOrder = new Orders()
     returnOrder.customer = user
@@ -237,13 +237,19 @@ export class OrdersService {
     if (!order) {
       throw new NotFoundException('Order not found')
     }
+    if (order.status === 'confirmed') {
+      throw new BadRequestException('Order is already confirmed')
+    }
+    if (order.status === 'delivered') {
+      throw new BadRequestException('Order is already delivered')
+    }
 
     await this.orderRepository.update({ orderId }, { status: 'confirmed' })
 
     const currentStatus = await this.orderRepository.findOne({ where: { orderId } })
 
     return {
-      message: 'Order confirmed',
+      message: `Order ${order.orderId} confirmed`,
       orderId
     }
   }
@@ -274,8 +280,8 @@ export class OrdersService {
       throw new NotFoundException('Order not found')
     }
 
-    if (order.status !== 'delivered') {
-      throw new BadRequestException('Order is not delivered to be returned')
+    if (order.status !== 'returned') {
+      throw new BadRequestException('Order is not returned to be ready to refund')
     }
 
     await this.orderRepository.update({ orderId }, { status: 'ready to refund' })

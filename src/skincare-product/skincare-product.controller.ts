@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UsePipes, ValidationPipe } from '@nestjs/common'
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UsePipes,
+  ValidationPipe
+} from '@nestjs/common'
 import { SkincareProductService } from './skincare-product.service'
 import { CreateProductWithDetailsDto } from './dtos/AddProduct.dto'
 import { UpdateProductDto } from './dtos/update-product.dto'
@@ -43,5 +54,15 @@ export class SkincareProductController {
   @Put('update/:id')
   updateProduct(@Param('id') productId: number, @Body() updateProductDto: UpdateProductDto) {
     return this.SkincareProductService.update(productId, updateProductDto)
+  }
+
+  @Get('sales/:productId')
+  getProductSales(@Param('productId') productId: number) {
+    return this.SkincareProductService.getProductSales(productId)
+  }
+
+  @Get('compare/:id1/:id2')
+  compareProducts(@Param('id1') productId1: number, @Param('id2') productId2: number) {
+    return this.SkincareProductService.compareProducts(productId1, productId2)
   }
 }
