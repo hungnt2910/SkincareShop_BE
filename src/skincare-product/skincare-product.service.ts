@@ -30,11 +30,10 @@ export class SkincareProductService {
   }
 
   async getProductById(productId: number) {
-    console.log(productId)
 
     const product = await this.SkincareProductRepository.findOne({
       where: { productId },
-      relations: ['category', 'brand'] // Include brand relation
+      relations: ["category", "brand", "orderDetails", "reviews"] // Include brand relation
     })
 
     if (!product) {
@@ -45,11 +44,16 @@ export class SkincareProductService {
       where: { category: product?.category }
     })
 
+    const productDetails = await this.SkincareProductDetailsRepository.find({
+      where: { product: {productId: productId} },
+    });
+
     return {
       ...product,
       brandName: product.brand?.brandName,
       categoryName: product.category?.name, // Extract brand name
-      relatedProducts
+      relatedProducts,
+      productDetails
     }
   }
 
@@ -219,5 +223,9 @@ export class SkincareProductService {
         urlImage: product2.urlImage
       }
     }
+  }
+
+  async getProductDetailByProductId(){
+
   }
 }
