@@ -34,7 +34,11 @@ export class BlogsService {
 
     if (!blog) throw new NotFoundException('Blog not found')
 
-    return blog
+
+      return {
+        ...blog,
+        product: blog.product // Returns only one product instead of an array
+      };
   }
 
   async createBlog(dto: CreateBlogDto) {

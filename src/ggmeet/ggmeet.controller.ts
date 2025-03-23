@@ -17,4 +17,9 @@ export class GgmeetController {
   async getMeetForStaff(@Body() assignStaff: AssignStaff) {
     return this.googleService.assignStaffToMeetLink(assignStaff)
   }
+
+  @Get()
+  async getAllMeet(){
+    return this.googleService.getAllMeets()
+  }
 }
