@@ -71,4 +71,10 @@ export class GoogleMeetService {
       return null
     }
   }
+
+  async getAllMeets() {
+    return await this.googleMeetRepository.find({
+      relations: ['user', 'staff'], // Load related user and staff data
+    });
+  }
 }

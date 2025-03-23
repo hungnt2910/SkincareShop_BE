@@ -17,7 +17,7 @@ export class Blogs {
     @Column("text")
     description: string;
 
-    @Column()
+    @Column("text")
     imageUrl: string;
 
     @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
