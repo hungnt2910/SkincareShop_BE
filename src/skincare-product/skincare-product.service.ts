@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Brand, Category, SkincareProduct, SkincareProductDetails } from 'src/typeorm/entities'
+import { Brand, Category, SkincareProduct, SkincareProductDetails, SkinType } from 'src/typeorm/entities'
 import { Like, Repository, UpdateResult } from 'typeorm'
 import { CreateProductWithDetailsDto } from './dtos/AddProduct.dto'
 import { UpdateProductDto } from './dtos/update-product.dto'
@@ -15,7 +15,9 @@ export class SkincareProductService {
     @InjectRepository(Brand)
     private readonly BrandRepository: Repository<Brand>,
     @InjectRepository(SkincareProductDetails)
-    private readonly SkincareProductDetailsRepository: Repository<SkincareProductDetails>
+    private readonly SkincareProductDetailsRepository: Repository<SkincareProductDetails>,
+    @InjectRepository(SkinType)
+    private readonly skinTypeRepository: Repository<SkinType>,
   ) {}
 
   async getAllProduct() {
@@ -225,7 +227,11 @@ export class SkincareProductService {
     }
   }
 
-  async getProductDetailByProductId(){
-
+  async getProductsBySkinType(skinTypeId: number): Promise<SkincareProduct[]> {
+    return this.SkincareProductRepository
+      .createQueryBuilder('product')
+      .innerJoin('product.skinTypes', 'skinType')
+      .where('skinType.skinTypeId = :skinTypeId', { skinTypeId })
+      .getMany();
   }
 }

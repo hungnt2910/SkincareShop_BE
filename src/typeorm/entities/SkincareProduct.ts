@@ -1,8 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm'
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  ManyToMany,
+  JoinTable
+} from 'typeorm'
 import { Category } from './Category'
 import { Brand } from './Brand'
 import { Reviews } from './Reviews'
 import { OrderDetail } from './OrderDetail'
+import { SkinType } from './SkinType'
 
 @Entity()
 export class SkincareProduct {
@@ -43,4 +53,12 @@ export class SkincareProduct {
 
   @OneToMany(() => Reviews, (review) => review.product)
   reviews: Reviews[]
+
+  @ManyToMany(() => SkinType)
+  @JoinTable({
+    name: 'skincare_product_skin_type',
+    joinColumn: { name: 'product_id', referencedColumnName: 'productId' },
+    inverseJoinColumn: { name: 'skin_type_id', referencedColumnName: 'skinTypeId' } // ✅ Use `skinTypeId`
+  })
+  skinTypes: SkinType[]
 }
