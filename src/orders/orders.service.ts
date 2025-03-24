@@ -8,7 +8,7 @@ import {
   SkincareProductDetails,
   User
 } from 'src/typeorm/entities'
-import { Or, Repository } from 'typeorm'
+import { MoreThan, Or, Repository } from 'typeorm'
 import { OrderItemDto, ReadyToCheckoutDto, ReturnOrderDetailDto, callbackReturnDto } from './dto/order-items-dto'
 import { log } from 'console'
 
@@ -24,7 +24,9 @@ export class OrdersService {
     @InjectRepository(SkincareProduct)
     private readonly skincareProductRepository: Repository<SkincareProduct>,
     @InjectRepository(ReturnOrderDetail)
-    private readonly returnOrderDetailRepository: Repository<ReturnOrderDetail>
+    private readonly returnOrderDetailRepository: Repository<ReturnOrderDetail>,
+    @InjectRepository(SkincareProductDetails)
+    private readonly skincareProductDetailsRepository: Repository<SkincareProductDetails>
   ) {}
 
   async getAllOrder() {
@@ -198,7 +200,7 @@ export class OrdersService {
     if (!returningOrderInfo) {
       throw new NotFoundException('Order not found')
     }
-    if (returningOrderInfo.status === 'returned') {
+    if (returningOrderInfo.status === 'paid') {
       throw new BadRequestException('Order is already returned')
     }
 
@@ -231,7 +233,7 @@ export class OrdersService {
     }
 
     await this.returnOrderDetailRepository.save(returnOrderDetails)
-    await this.orderRepository.update({ orderId: returnOrderDetailDto.order_id }, { status: 'returned' })
+    await this.orderRepository.update({ orderId: returnOrderDetailDto.order_id }, { status: 'paid' })
 
     return {
       message: 'Order is being returned',
@@ -248,20 +250,6 @@ export class OrdersService {
         quantity: detail.quantity,
         price: detail.price
       }))
-    }
-  }
-
-  async returnOrderDetailsCallback(callbackReturnDto: callbackReturnDto) {
-    console.log(callbackReturnDto.order_id)
-
-    await this.orderRepository.update({ orderId: callbackReturnDto.order_id }, { status: 'returned' })
-    const order = await this.orderRepository.findOne({ where: { orderId: callbackReturnDto.order_id } })
-    if (!order) {
-      throw new NotFoundException('Order not found')
-    }
-
-    if (order.status === 'returned') {
-      throw new BadRequestException('Order is already returned')
     }
   }
 
@@ -336,10 +324,59 @@ export class OrdersService {
     } else if (order.status === 'refunded') {
       throw new BadRequestException('Order is already refunded')
     } else if (order.status !== 'ready to refund') {
-      throw new BadRequestException('Order is not ready to refund to be refunded')
+      throw new BadRequestException('Order is not ready to be refunded')
     }
 
+    // Update order status to 'refunded'
     await this.orderRepository.update({ orderId }, { status: 'refunded' })
+
+    // Get order items and related product details
+    const orderItems = await this.returnOrderDetailRepository.find({
+      where: { order: { orderId } },
+      relations: ['product']
+    })
+
+    for (const item of orderItems) {
+      let remainingQuantity = item.quantity
+
+      // Get product details ordered by expiration date
+      const productDetails = await this.skincareProductDetailsRepository.find({
+        where: {
+          product: { productId: item.product.productId },
+          expirationDate: MoreThan(new Date()) // Only consider non-expired products
+        },
+        order: { expirationDate: 'ASC' }
+      })
+
+      for (const detail of productDetails) {
+        if (remainingQuantity <= 0) break
+
+        const updateQuantity = Math.min(detail.quantity, remainingQuantity)
+
+        // Update product details quantity (add back the refunded quantity)
+        await this.skincareProductDetailsRepository.update(
+          { productDetailsId: detail.productDetailsId },
+          { quantity: detail.quantity + updateQuantity }
+        )
+
+        remainingQuantity -= updateQuantity
+      }
+
+      // If there's still remaining quantity, add it to the overall stock
+      if (remainingQuantity > 0) {
+        await this.skincareProductDetailsRepository.increment(
+          { product: { productId: item.product.productId } },
+          'quantity',
+          remainingQuantity
+        )
+      }
+
+      // Update product stock in main table
+      await this.skincareProductRepository.update(
+        { productId: item.product.productId },
+        { stock: item.product.stock + item.quantity }
+      )
+    }
 
     return {
       message: `Order is refunded.`,
