@@ -5,6 +5,7 @@ import { Reviews } from './Reviews'
 import { Blogs } from './Blogs'
 import { UserVoucher } from './UserVoucher'
 import { CareRoute } from './CareRoute'
+import { PasswordResetTokens } from './PasswordResetTokens'
 
 @Entity()
 export class User {
@@ -46,5 +47,8 @@ export class User {
   userVouchers: UserVoucher[]
 
   @OneToMany(() => CareRoute, (routine) => routine.user)
-  skincareRoutines: CareRoute[];
+  skincareRoutines: CareRoute[]
+
+  @OneToMany(() => PasswordResetTokens, (token) => token.user)
+  passwordResetTokens: PasswordResetTokens[]
 }

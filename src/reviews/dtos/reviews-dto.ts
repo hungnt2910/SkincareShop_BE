@@ -20,9 +20,3 @@ export class ReviewByProductIdDto {
   @IsOptional()
   comment: string
 }
-
-export class getReviewsByProductIdDto {
-  @IsNumber()
-  @IsNotEmpty()
-  productId: number
-}
