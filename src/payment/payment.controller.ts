@@ -1,11 +1,13 @@
 import { Body, Controller, Param, Post } from '@nestjs/common'
 import { PaymentService } from './payment.service'
+import { Roles } from 'src/role/roles.decorator'
 
 @Controller('payment')
 export class PaymentController {
   constructor(private paymentService: PaymentService) {}
 
   @Post('create/:orderId')
+  @Roles('User')
   async createPayment(@Param('orderId') orderId: number) {
     const paymentResult = await this.paymentService.createPayment(orderId)
 
