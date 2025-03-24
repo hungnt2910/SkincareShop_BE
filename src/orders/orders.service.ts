@@ -192,6 +192,11 @@ export class OrdersService {
     }
 
     const returningOrder = await this.orderRepository.update({ orderId }, { status: 'returned' })
+    const returningOrderInfo = await this.orderRepository.findOne({ where: { orderId } })
+
+    if (!returningOrderInfo) {
+      throw new NotFoundException('Order not found')
+    }
     const order = await this.orderRepository.findOne({ where: { orderId } })
 
     if (!returningOrder) {
@@ -211,6 +216,8 @@ export class OrdersService {
     returnOrder.amount = returnOrderDetailDto.total_amount
     returnOrder.status = 'returned'
     returnOrder.shippingAddress = returnOrderDetailDto.shippingAddress
+    returnOrder.receiverName = returningOrderInfo.receiverName
+    returnOrder.phoneNumber = returningOrderInfo.phoneNumber
 
     const savedReturnOrder = await this.orderRepository.save(returnOrder)
 
@@ -236,6 +243,8 @@ export class OrdersService {
       message: 'Order is being returned',
       name: user.username,
       email: user.email,
+      receiverName: savedReturnOrder.receiverName,
+      phoneNumber: savedReturnOrder.phoneNumber,
       shippingAddress: savedReturnOrder.shippingAddress,
       total_amount: savedReturnOrder.amount,
       orderId: savedReturnOrder.orderId,
