@@ -11,7 +11,6 @@ export class OrdersController {
   constructor(private orderService: OrdersService) {}
 
   @Get()
-  @Roles('Admin', 'Staff')
   getAllOrder() {
     return this.orderService.getAllOrder()
   }
