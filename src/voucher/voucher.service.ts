@@ -18,6 +18,12 @@ export class VoucherService {
   async createVoucher(createVoucherDto: createVoucherDto) {
     const { code, discount, expirationDate } = createVoucherDto
 
+    const existingCode = await this.voucherRepository.findOne({ where: { code } })
+
+    if (existingCode) {
+      throw new BadRequestException(`Voucher code "${code}" already exists`)
+    }
+
     const existingVoucher = await this.voucherRepository.findOne({
       where: { discount, expirationDate }
     })
@@ -36,9 +42,9 @@ export class VoucherService {
     try {
       return await this.voucherRepository.save(voucher)
     } catch (error) {
-      if (error?.code === 'ER_DUP_ENTRY') {
-        throw new BadRequestException(`Voucher code "${code}" already exists`)
-      }
+      // if (error?.code === 'ER_DUP_ENTRY') {
+      //   throw new BadRequestException(`Voucher code "${code}" already exists`)
+      // }
       throw error
     }
   }
@@ -160,7 +166,6 @@ export class VoucherService {
       )
     }
 
-    // ✅ Update the `used` status to true
     userVoucher.used = true
     await this.userVoucherRepository.save(userVoucher)
 
