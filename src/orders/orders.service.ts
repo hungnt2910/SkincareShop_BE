@@ -459,6 +459,7 @@ export class OrdersService {
         'orderDetail.orderDetailId AS orderDetailId',
         'orderDetail.price AS price',
         'orderDetail.quantity AS quantity',
+        'product.productId AS productId',
         'product.productName AS productName'
       ])
       .getRawMany()
@@ -486,6 +487,7 @@ export class OrdersService {
       // Adding order details
       order.orderDetails.push({
         orderDetailId: row.orderDetailId,
+        productId: row.productId,
         price: row.price,
         quantity: row.quantity,
         productName: row.productName
