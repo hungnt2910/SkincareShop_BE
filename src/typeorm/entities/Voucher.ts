@@ -2,7 +2,6 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Unique } from 'typeo
 import { UserVoucher } from './UserVoucher'
 
 @Entity()
-@Unique(['code'])
 export class Voucher {
   @PrimaryGeneratedColumn()
   voucherId: number
