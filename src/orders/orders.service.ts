@@ -32,7 +32,9 @@ export class OrdersService {
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.orderDetails', 'orderDetail')
       .leftJoinAndSelect('orderDetail.product', 'product')
+      .leftJoinAndSelect('order.customer', 'user')
       .select([
+        'user.username AS username',
         'order.orderId AS orderId',
         'order.status AS status',
         'order.amount AS amount',
@@ -51,6 +53,7 @@ export class OrdersService {
       if (!order) {
         order = {
           orderId: row.orderId,
+          username: row.username,
           status: row.status,
           amount: row.amount,
           shippingAddress: row.shippingAddress,
@@ -133,6 +136,8 @@ export class OrdersService {
     order.amount = readyToCheckoutDto.total_amount
     order.status = 'pending'
     order.shippingAddress = readyToCheckoutDto.shippingAddress
+    order.receiverName = readyToCheckoutDto.receiverName
+    order.phoneNumber = readyToCheckoutDto.phoneNumber
 
     const savedOrder = await this.orderRepository.save(order)
 
@@ -161,6 +166,8 @@ export class OrdersService {
       email: user.email,
       shippingAddress: savedOrder.shippingAddress,
       total_amount: savedOrder.amount,
+      receiverName: savedOrder.receiverName,
+      phoneNumber: savedOrder.phoneNumber,
       orderId: savedOrder.orderId,
       orderDetails: orderDetails.map((detail) => ({
         product_id: detail.product.productId,

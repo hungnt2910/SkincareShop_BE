@@ -16,28 +16,31 @@ export class VoucherService {
   ) {}
 
   async createVoucher(createVoucherDto: createVoucherDto) {
-    const { discount, expirationDate } = createVoucherDto
+    const { code, discount, expirationDate } = createVoucherDto
 
-    // Use raw SQL query with ? placeholders for MySQL
-    const existingVoucher = await this.voucherRepository.query(
-      `SELECT * FROM voucher 
-     WHERE CAST(discount AS DECIMAL(10,2)) = ? 
-     AND expirationDate = ?`,
-      [discount, expirationDate]
-    )
+    const existingVoucher = await this.voucherRepository.findOne({
+      where: { discount, expirationDate }
+    })
 
-    if (existingVoucher.length > 0) {
+    if (existingVoucher) {
       throw new BadRequestException(
         `A voucher with discount ${discount}% and expiration date ${expirationDate} already exists`
       )
     }
 
     const voucher = new Voucher()
-    voucher.code = createVoucherDto.code
-    voucher.discount = createVoucherDto.discount
-    voucher.expirationDate = createVoucherDto.expirationDate
+    voucher.code = code
+    voucher.discount = discount
+    voucher.expirationDate = expirationDate
 
-    return await this.voucherRepository.save(voucher)
+    try {
+      return await this.voucherRepository.save(voucher)
+    } catch (error) {
+      if (error?.code === 'ER_DUP_ENTRY') {
+        throw new BadRequestException(`Voucher code "${code}" already exists`)
+      }
+      throw error
+    }
   }
 
   async updateVoucher(voucherId: number, updateVoucherDto: updateVoucherDto) {
@@ -174,6 +177,19 @@ export class VoucherService {
       throw new BadRequestException(`User with id ${userId} not found`)
     }
 
-    return await this.userVoucherRepository.find({ where: { user: { id: userId } } })
+    return await this.userVoucherRepository.find({
+      where: { user: { id: userId } },
+      relations: ['voucher'],
+      select: {
+        id: true,
+        used: true,
+        voucher: {
+          voucherId: true,
+          code: true,
+          discount: true,
+          expirationDate: true
+        }
+      }
+    })
   }
 }
