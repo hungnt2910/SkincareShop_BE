@@ -17,6 +17,23 @@ export class ReviewsService {
     private userRepository: Repository<User>
   ) {}
 
+  async getAllReviews() {
+    const reviews = await this.reviewsRepository.find({
+      relations: ['product', 'user', 'order']
+    })
+
+    return reviews.map((review) => ({
+      reviewId: review.reviewId,
+      productId: review.product.productId,
+      productName: review.product.productName,
+      userId: review.user.id,
+      username: review.user.username,
+      orderId: review.order.orderId,
+      rating: review.rating,
+      comment: review.comment,
+      reviewDate: review.reviewDate
+    }))
+  }
   async reviewByProductId(reviewByProductIdDto: ReviewByProductIdDto) {
     const existingReview = await this.reviewsRepository.findOne({
       where: {
@@ -25,10 +42,6 @@ export class ReviewsService {
         order: { orderId: reviewByProductIdDto.orderId }
       }
     })
-
-    if (existingReview) {
-      throw new BadRequestException('You have already reviewed this product in this order')
-    }
 
     const product = await this.skincareProductRepository.findOne({
       where: { productId: reviewByProductIdDto.productId }
@@ -61,10 +74,17 @@ export class ReviewsService {
     review.rating = reviewByProductIdDto.rating
     review.comment = reviewByProductIdDto.comment
 
-    await this.reviewsRepository.save(review)
-    return {
-      success: true,
-      message: 'Review created successfully'
+    if (existingReview) {
+      return {
+        success: false,
+        message: 'You have already reviewed this product in this order'
+      }
+    } else {
+      await this.reviewsRepository.save(review)
+      return {
+        success: true,
+        message: 'Review created successfully'
+      }
     }
   }
 
