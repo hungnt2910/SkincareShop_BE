@@ -9,7 +9,7 @@ import {
   User
 } from 'src/typeorm/entities'
 import { Or, Repository } from 'typeorm'
-import { OrderItemDto, ReadyToCheckoutDto, ReturnOrderDetailDto } from './dto/order-items-dto'
+import { OrderItemDto, ReadyToCheckoutDto, ReturnOrderDetailDto, callbackReturnDto } from './dto/order-items-dto'
 import { log } from 'console'
 
 @Injectable()
@@ -177,6 +177,7 @@ export class OrdersService {
       receiverName: savedOrder.receiverName,
       phoneNumber: savedOrder.phoneNumber,
       orderId: savedOrder.orderId,
+      reason: savedOrder.reason,
       orderDetails: orderDetails.map((detail) => ({
         product_id: detail.product.productId,
         quantity: detail.quantity,
@@ -185,29 +186,19 @@ export class OrdersService {
     }
   }
 
-  async readyReturnOrderDetail(returnOrderDetailDto: ReturnOrderDetailDto, orderId: number) {
+  async readyReturnOrderDetail(returnOrderDetailDto: ReturnOrderDetailDto) {
+    console.log(returnOrderDetailDto.order_id)
+
     const user = await this.userRepository.findOne({ where: { id: returnOrderDetailDto.user_id } })
     if (!user) {
       throw new NotFoundException('User not found')
     }
 
-    const returningOrder = await this.orderRepository.update({ orderId }, { status: 'returned' })
-    const returningOrderInfo = await this.orderRepository.findOne({ where: { orderId } })
-
+    const returningOrderInfo = await this.orderRepository.findOne({ where: { orderId: returnOrderDetailDto.order_id } })
     if (!returningOrderInfo) {
       throw new NotFoundException('Order not found')
     }
-    const order = await this.orderRepository.findOne({ where: { orderId } })
-
-    if (!returningOrder) {
-      throw new NotFoundException('Order not found')
-    }
-
-    if (!order) {
-      throw new NotFoundException('Order not found')
-    }
-
-    if (order.status === 'returned') {
+    if (returningOrderInfo.status === 'returned') {
       throw new BadRequestException('Order is already returned')
     }
 
@@ -218,6 +209,7 @@ export class OrdersService {
     returnOrder.shippingAddress = returnOrderDetailDto.shippingAddress
     returnOrder.receiverName = returningOrderInfo.receiverName
     returnOrder.phoneNumber = returningOrderInfo.phoneNumber
+    returnOrder.reason = returnOrderDetailDto.reason
 
     const savedReturnOrder = await this.orderRepository.save(returnOrder)
 
@@ -239,6 +231,8 @@ export class OrdersService {
     }
 
     await this.returnOrderDetailRepository.save(returnOrderDetails)
+    await this.orderRepository.update({ orderId: returnOrderDetailDto.order_id }, { status: 'returned' })
+
     return {
       message: 'Order is being returned',
       name: user.username,
@@ -248,11 +242,26 @@ export class OrdersService {
       shippingAddress: savedReturnOrder.shippingAddress,
       total_amount: savedReturnOrder.amount,
       orderId: savedReturnOrder.orderId,
+      reason: savedReturnOrder.reason,
       orderDetails: returnOrderDetails.map((detail) => ({
         product_id: detail.product.productId,
         quantity: detail.quantity,
         price: detail.price
       }))
+    }
+  }
+
+  async returnOrderDetailsCallback(callbackReturnDto: callbackReturnDto) {
+    console.log(callbackReturnDto.order_id)
+
+    await this.orderRepository.update({ orderId: callbackReturnDto.order_id }, { status: 'returned' })
+    const order = await this.orderRepository.findOne({ where: { orderId: callbackReturnDto.order_id } })
+    if (!order) {
+      throw new NotFoundException('Order not found')
+    }
+
+    if (order.status === 'returned') {
+      throw new BadRequestException('Order is already returned')
     }
   }
 
@@ -353,6 +362,7 @@ export class OrdersService {
         'order.timestamp AS timestamp',
         'order.receiverName AS receiverName',
         'order.phoneNumber AS phoneNumber',
+        'order.reason AS reason',
         'returnDetail.returnOrderDetailId AS returnOrderDetailId',
         'returnDetail.price AS price',
         'returnDetail.quantity AS quantity',
@@ -374,6 +384,7 @@ export class OrdersService {
           receiverName: row.receiverName,
           phoneNumber: row.phoneNumber,
           shippingAddress: row.shippingAddress,
+          reason: row.reason,
           timestamp: row.timestamp,
           returnDetails: []
         }
@@ -409,6 +420,7 @@ export class OrdersService {
         'order.timestamp AS timestamp',
         'order.receiverName AS receiverName',
         'order.phoneNumber AS phoneNumber',
+        'order.reason AS reason',
         'returnDetail.returnOrderDetailId AS returnOrderDetailId',
         'returnDetail.price AS price',
         'returnDetail.quantity AS quantity',
@@ -430,6 +442,7 @@ export class OrdersService {
           receiverName: row.receiverName,
           phoneNumber: row.phoneNumber,
           shippingAddress: row.shippingAddress,
+          reason: row.reason,
           timestamp: row.timestamp,
           returnDetails: []
         }

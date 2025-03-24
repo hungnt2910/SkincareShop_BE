@@ -20,4 +20,9 @@ export class ReviewsController {
   getReviewsByProductId(@Param('productId') productId: number) {
     return this.reviewsService.getReviewsByProductId(productId)
   }
+
+  @Get('getAll')
+  getAllReviews() {
+    return this.reviewsService.getAllReviews()
+  }
 }

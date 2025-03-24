@@ -76,6 +76,8 @@ export class AdminService {
       })
 
       this.userRepository.save(newUser)
+
+      return { message: 'User created successfully' }
     } catch (error) {
       throw new BadRequestException(error)
     }

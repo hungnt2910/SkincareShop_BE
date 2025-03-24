@@ -3,6 +3,7 @@ import { OrdersService } from './orders.service'
 import { AuthGuard } from 'src/guards/auth.guard'
 import { Roles } from 'src/role/roles.decorator'
 import { Role } from 'src/typeorm/entities'
+import { ReturnOrderDetailDto, callbackReturnDto } from './dto/order-items-dto'
 
 @UseGuards(AuthGuard)
 @Controller('orders')
@@ -28,8 +29,8 @@ export class OrdersController {
 
   @Post('return')
   @Roles('User')
-  readyReturnOrderDetail(@Body() returnOrderDetailDto, orderId: number) {
-    return this.orderService.readyReturnOrderDetail(returnOrderDetailDto, orderId)
+  async readyReturnOrderDetail(@Body() returnOrderDetailDto: ReturnOrderDetailDto) {
+    return this.orderService.readyReturnOrderDetail(returnOrderDetailDto)
   }
 
   @Put('confirm/:orderId')

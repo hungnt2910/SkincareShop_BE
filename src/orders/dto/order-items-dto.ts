@@ -45,6 +45,10 @@ export class ReturnOrderDetailDto {
   user_id: number
 
   @IsNumber()
+  @IsNotEmpty()
+  order_id: number
+
+  @IsNumber()
   @IsPositive()
   total_amount: number
 
@@ -55,4 +59,13 @@ export class ReturnOrderDetailDto {
 
   @IsNotEmpty()
   shippingAddress: string
+
+  @IsNotEmpty()
+  reason: string
+}
+
+export class callbackReturnDto {
+  @IsNumber()
+  @IsNotEmpty()
+  order_id: number
 }

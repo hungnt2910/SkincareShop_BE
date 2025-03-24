@@ -29,6 +29,9 @@ export class Orders {
   @Column()
   phoneNumber: string
 
+  @Column({ nullable: true })
+  reason: string
+
   @OneToMany(() => OrderDetail, (orderDetail) => orderDetail.order)
   orderDetails: OrderDetail[]
 
