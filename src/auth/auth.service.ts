@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import * as crypto from 'crypto'
 import * as nodemailer from 'nodemailer'
-import { PasswordResetTokens } from 'src/typeorm/entities'
+import { PasswordResetTokens, SkinTypeResult } from 'src/typeorm/entities'
 import { ResetPasswordDto, ResetPasswordInfoDto } from './dto/ResetPasswordDto'
 
 @Injectable()
@@ -20,7 +20,9 @@ export class AuthService {
     private jwtService: JwtService,
     private readonly configService: ConfigService,
     @InjectRepository(PasswordResetTokens)
-    private readonly PasswordResetTokens: Repository<PasswordResetTokens>
+    private readonly PasswordResetTokens: Repository<PasswordResetTokens>,
+    @InjectRepository(SkinTypeResult)
+    private skinTypeResultRepository: Repository<SkinTypeResult>
   ) {}
 
   async signup(signupData: SignUpDto) {
@@ -69,12 +71,20 @@ export class AuthService {
     if (!comparedPassword) {
       throw new UnauthorizedException('Wrong credentials')
     }
+    const skinTypeResult = await this.skinTypeResultRepository.findOne({
+      where: { customer: { id: user.id } },
+      relations: ['customer', 'skinType']
+    })
 
-    return this.generateUserTokens(user.id, user.role.roleName)
+    if (!skinTypeResult) {
+      return null
+    }
+
+    return this.generateUserTokens(user.id, user.role.roleName, skinTypeResult.skinTypeResultId)
   }
 
-  async generateUserTokens(userId: number, role: string) {
-    const accessToken = this.jwtService.sign({ userId, role }, { expiresIn: '1h' })
+  async generateUserTokens(userId: number, role: string, skinType: any) {
+    const accessToken = this.jwtService.sign({ userId, role, skinType }, { expiresIn: '1h' })
 
     return {
       accessToken

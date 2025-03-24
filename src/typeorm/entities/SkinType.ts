@@ -1,14 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
-import { SkinTypeDetails } from "./SkinTypeDetails";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany } from 'typeorm'
+import { SkinTypeDetails } from './SkinTypeDetails'
+import { SkincareProduct } from './SkincareProduct'
 
 @Entity()
 export class SkinType {
-    @PrimaryGeneratedColumn()
-    skinTypeId: number;
+  @PrimaryGeneratedColumn()
+  skinTypeId: number
 
-    @Column()
-    type: string;
+  @Column()
+  type: string
 
-    // @OneToMany(() => SkinTypeDetails, detail => detail.skinType)
-    // details: SkinTypeDetails[];
+  @ManyToMany(() => SkincareProduct, (product) => product.skinTypes)
+  products: SkincareProduct[]
 }

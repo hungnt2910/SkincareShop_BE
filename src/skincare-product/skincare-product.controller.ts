@@ -65,4 +65,9 @@ export class SkincareProductController {
   compareProducts(@Param('id1') productId1: number, @Param('id2') productId2: number) {
     return this.SkincareProductService.compareProducts(productId1, productId2)
   }
+
+  @Get('skin-type/:skinTypeId')
+  async getProductsBySkinType(@Param('skinTypeId') skinTypeId: number) {
+    return this.SkincareProductService.getProductsBySkinType(skinTypeId);
+  }
 }
