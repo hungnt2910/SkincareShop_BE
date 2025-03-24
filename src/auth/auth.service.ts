@@ -77,7 +77,7 @@ export class AuthService {
     })
 
     if (!skinTypeResult) {
-      return null
+      return this.generateUserTokens(user.id, user.role.roleName, null)
     }
 
     return this.generateUserTokens(user.id, user.role.roleName, skinTypeResult.skinTypeResultId)
