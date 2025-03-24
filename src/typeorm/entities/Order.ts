@@ -23,6 +23,12 @@ export class Orders {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   timestamp: Date
 
+  @Column()
+  receiverName: string
+
+  @Column()
+  phoneNumber: string
+
   @OneToMany(() => OrderDetail, (orderDetail) => orderDetail.order)
   orderDetails: OrderDetail[]
 

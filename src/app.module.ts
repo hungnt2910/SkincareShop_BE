@@ -21,7 +21,7 @@ import { GgmeetModule } from './ggmeet/ggmeet.module'
 import { DashboardModule } from './dashboard/dashboard.module'
 import { ReviewsModule } from './reviews/reviews.module'
 import { BlogModule } from './blog/blog.module'
-import { CategoryModule } from './category/category.module';
+import { CategoryModule } from './category/category.module'
 import * as entities from './typeorm/entities'
 
 @Module({
@@ -61,7 +61,7 @@ import * as entities from './typeorm/entities'
     SkincareRouteModule,
     VoucherModule,
     DashboardModule,
-
+    ReviewsModule,
     GgmeetModule,
     BlogModule,
     CategoryModule

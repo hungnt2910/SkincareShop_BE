@@ -31,6 +31,12 @@ export class ReadyToCheckoutDto {
 
   @IsNotEmpty()
   shippingAddress: string
+
+  @IsNotEmpty()
+  receiverName: string
+
+  @IsNotEmpty()
+  phoneNumber: string
 }
 
 export class ReturnOrderDetailDto {

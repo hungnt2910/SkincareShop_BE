@@ -1,20 +1,21 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
-import { UserVoucher } from "./UserVoucher";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Unique } from 'typeorm'
+import { UserVoucher } from './UserVoucher'
 
 @Entity()
+@Unique(['code'])
 export class Voucher {
-    @PrimaryGeneratedColumn()
-    voucherId: number;
+  @PrimaryGeneratedColumn()
+  voucherId: number
 
-    @Column()
-    code: string;
+  @Column({ unique: true })
+  code: string
 
-    @Column("float")
-    discount: number;
+  @Column('float')
+  discount: number
 
-    @Column({ type: "timestamp" })
-    expirationDate: Date;
+  @Column({ type: 'timestamp' })
+  expirationDate: Date
 
-    @OneToMany(() => UserVoucher, uv => uv.voucher)
-    userVouchers: UserVoucher[];
+  @OneToMany(() => UserVoucher, (uv) => uv.voucher)
+  userVouchers: UserVoucher[]
 }
