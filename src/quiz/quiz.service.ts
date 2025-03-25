@@ -1,4 +1,4 @@
-import { BadGatewayException, Injectable } from '@nestjs/common'
+import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Quiz, QuizChoice, SkinType, SkinTypeResult, User } from 'src/typeorm/entities'
 import { Repository } from 'typeorm'
@@ -26,7 +26,7 @@ export class QuizService {
     })
   }
 
-  async checkQuiz(userId:number, userAnswer: QuizAnswerDto[]) {
+  async checkQuiz(userId: number, userAnswer: QuizAnswerDto[]) {
     const quizList = await this.getQuiz()
 
     // Get skin types from the database
@@ -69,9 +69,9 @@ export class QuizService {
     // Get the final detected skin type from the database
     const detectedSkinType = skinTypes[mostFrequent].type
 
-    const result = this.saveSkinTypeResult(userId, detectedSkinType)
+    const result = await this.saveSkinTypeResult(userId, detectedSkinType)
 
-    return detectedSkinType
+    return result.skinTypeResultId
   }
 
   async saveSkinTypeResult(userId: number, detectedSkinType: string) {
@@ -80,6 +80,12 @@ export class QuizService {
 
     const skinType = await this.skinTypeRepository.findOne({ where: { type: detectedSkinType } })
     if (!skinType) throw new BadGatewayException('Skin type not found')
+
+    const isSubmit = await this.skinTypeResultRepository.find({ where: { customer: { id: userId } } })
+
+    if(isSubmit){
+      throw new BadRequestException('Quiz only do one time')
+    }
 
     const skinTypeResult = this.skinTypeResultRepository.create({
       customer: user,
