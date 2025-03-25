@@ -80,7 +80,9 @@ export class AuthService {
       return this.generateUserTokens(user.id, user.role.roleName, null)
     }
 
-    return this.generateUserTokens(user.id, user.role.roleName, skinTypeResult.skinTypeResultId)
+    console.log(skinTypeResult)
+
+    return this.generateUserTokens(user.id, user.role.roleName, skinTypeResult.skinType.skinTypeId)
   }
 
   async generateUserTokens(userId: number, role: string, skinType: any) {
