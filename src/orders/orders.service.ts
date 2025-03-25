@@ -34,6 +34,8 @@ export class OrdersService {
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.orderDetails', 'orderDetail')
       .leftJoinAndSelect('orderDetail.product', 'product')
+      .leftJoinAndSelect('order.returnDetails', 'returnOrderDetail')
+      .leftJoinAndSelect('returnOrderDetail.product', 'returnProduct')
       .leftJoinAndSelect('order.customer', 'user')
       .select([
         'user.username AS username',
@@ -44,10 +46,18 @@ export class OrdersService {
         'order.timestamp AS timestamp',
         'order.receiverName AS receiverName',
         'order.phoneNumber AS phoneNumber',
+
+        // For orderDetail (for pending, paid, confirmed, delivered)
         'orderDetail.orderDetailId AS orderDetailId',
         'orderDetail.price AS price',
         'orderDetail.quantity AS quantity',
-        'product.productName AS productName'
+        'product.productName AS productName',
+
+        // For returnOrderDetail (for returned, refunded)
+        'returnOrderDetail.returnOrderDetailId AS returnOrderDetailId',
+        'returnOrderDetail.price AS returnPrice',
+        'returnOrderDetail.quantity AS returnQuantity',
+        'returnProduct.productName AS returnProductName'
       ])
       .getRawMany()
 
@@ -64,18 +74,33 @@ export class OrdersService {
           phoneNumber: row.phoneNumber,
           shippingAddress: row.shippingAddress,
           timestamp: row.timestamp,
-          orderDetails: []
+          orderDetails: [],
+          returnOrderDetails: []
         }
         acc.push(order)
       }
 
-      // Adding orderDetails
-      order.orderDetails.push({
-        orderDetailId: row.orderDetailId,
-        price: row.price,
-        quantity: row.quantity,
-        productName: row.productName
-      })
+      if (['pending', 'paid', 'confirmed', 'delivered'].includes(row.status)) {
+        // Adding orderDetails if status is pending, paid, confirmed, or delivered
+        if (row.orderDetailId) {
+          order.orderDetails.push({
+            orderDetailId: row.orderDetailId,
+            price: row.price,
+            quantity: row.quantity,
+            productName: row.productName
+          })
+        }
+      } else if (['returned', 'refunded', 'ready to refund'].includes(row.status)) {
+        // Adding returnOrderDetails if status is returned or refunded
+        if (row.returnOrderDetailId) {
+          order.returnOrderDetails.push({
+            returnOrderDetailId: row.returnOrderDetailId,
+            price: row.returnPrice,
+            quantity: row.returnQuantity,
+            productName: row.returnProductName
+          })
+        }
+      }
 
       return acc
     }, [])
@@ -88,8 +113,12 @@ export class OrdersService {
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.orderDetails', 'orderDetail')
       .leftJoinAndSelect('orderDetail.product', 'product')
+      .leftJoinAndSelect('order.returnDetails', 'returnOrderDetail')
+      .leftJoinAndSelect('returnOrderDetail.product', 'returnProduct')
+      .leftJoinAndSelect('order.customer', 'user')
       .where('order.customer = :userId', { userId })
       .select([
+        'user.username AS username',
         'order.orderId AS orderId',
         'order.status AS status',
         'order.amount AS amount',
@@ -97,10 +126,18 @@ export class OrdersService {
         'order.timestamp AS timestamp',
         'order.receiverName AS receiverName',
         'order.phoneNumber AS phoneNumber',
+
+        // For orderDetail (for pending, paid, confirmed, delivered)
         'orderDetail.orderDetailId AS orderDetailId',
         'orderDetail.price AS price',
         'orderDetail.quantity AS quantity',
-        'product.productName AS productName'
+        'product.productName AS productName',
+
+        // For returnOrderDetail (for returned, refunded)
+        'returnOrderDetail.returnOrderDetailId AS returnOrderDetailId',
+        'returnOrderDetail.price AS returnPrice',
+        'returnOrderDetail.quantity AS returnQuantity',
+        'returnProduct.productName AS returnProductName'
       ])
       .getRawMany()
 
@@ -110,24 +147,40 @@ export class OrdersService {
       if (!order) {
         order = {
           orderId: row.orderId,
+          username: row.username,
           status: row.status,
           amount: row.amount,
           receiverName: row.receiverName,
           phoneNumber: row.phoneNumber,
           shippingAddress: row.shippingAddress,
           timestamp: row.timestamp,
-          orderDetails: []
+          orderDetails: [],
+          returnOrderDetails: []
         }
         acc.push(order)
       }
 
-      // Adding orderDetails
-      order.orderDetails.push({
-        orderDetailId: row.orderDetailId,
-        price: row.price,
-        quantity: row.quantity,
-        productName: row.productName
-      })
+      if (['pending', 'paid', 'confirmed', 'delivered'].includes(row.status)) {
+        // Adding orderDetails if status is pending, paid, confirmed, or delivered
+        if (row.orderDetailId) {
+          order.orderDetails.push({
+            orderDetailId: row.orderDetailId,
+            price: row.price,
+            quantity: row.quantity,
+            productName: row.productName
+          })
+        }
+      } else if (['returned', 'refunded', 'ready to refund'].includes(row.status)) {
+        // Adding returnOrderDetails if status is returned or refunded
+        if (row.returnOrderDetailId) {
+          order.returnOrderDetails.push({
+            returnOrderDetailId: row.returnOrderDetailId,
+            price: row.returnPrice,
+            quantity: row.returnQuantity,
+            productName: row.returnProductName
+          })
+        }
+      }
 
       return acc
     }, [])
@@ -200,8 +253,8 @@ export class OrdersService {
     if (!returningOrderInfo) {
       throw new NotFoundException('Order not found')
     }
-    if (returningOrderInfo.status === 'paid') {
-      throw new BadRequestException('Order is already returned')
+    if (returningOrderInfo.isActive === false) {
+      throw new BadRequestException('Order is already returned ')
     }
 
     const returnOrder = new Orders()
@@ -233,7 +286,7 @@ export class OrdersService {
     }
 
     await this.returnOrderDetailRepository.save(returnOrderDetails)
-    await this.orderRepository.update({ orderId: returnOrderDetailDto.order_id }, { status: 'paid' })
+    await this.orderRepository.update({ orderId: returnOrderDetailDto.order_id }, { isActive: false })
 
     return {
       message: 'Order is being returned',
@@ -382,6 +435,64 @@ export class OrdersService {
       message: `Order is refunded.`,
       orderId
     }
+  }
+
+  async getReadyToRefundOrderByUser(userId: number) {
+    const orders = await this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.returnDetails', 'returnDetail')
+      .leftJoinAndSelect('returnDetail.product', 'product')
+      .where('order.customer = :userId', { userId })
+      .andWhere('order.status = :status', { status: 'ready to refund' })
+      .select([
+        'order.orderId AS orderId',
+        'order.status AS status',
+        'order.amount AS amount',
+        'order.shippingAddress AS shippingAddress',
+        'order.timestamp AS timestamp',
+        'order.receiverName AS receiverName',
+        'order.phoneNumber AS phoneNumber',
+        'order.reason AS reason',
+        'returnDetail.returnOrderDetailId AS returnOrderDetailId',
+        'returnDetail.price AS price',
+        'returnDetail.quantity AS quantity',
+        'product.productName AS productName'
+      ])
+      .getRawMany()
+
+    if (!orders.length) {
+      throw new NotFoundException(`No ready to refund orders found for user with ID ${userId}`)
+    }
+
+    const groupedOrders = orders.reduce((acc, row) => {
+      let order = acc.find((o) => o.orderId === row.orderId)
+      if (!order) {
+        order = {
+          orderId: row.orderId,
+          status: row.status,
+          amount: row.amount,
+          receiverName: row.receiverName,
+          phoneNumber: row.phoneNumber,
+          shippingAddress: row.shippingAddress,
+          reason: row.reason,
+          timestamp: row.timestamp,
+          returnDetails: []
+        }
+        acc.push(order)
+      }
+
+      // Adding order details
+      order.returnDetails.push({
+        returnOrderDetailId: row.returnOrderDetailId,
+        price: row.price,
+        quantity: row.quantity,
+        productName: row.productName
+      })
+
+      return acc
+    }, [])
+
+    return groupedOrders
   }
 
   async getRefundedOrderByUser(userId: number) {

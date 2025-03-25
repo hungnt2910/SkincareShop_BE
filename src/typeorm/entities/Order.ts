@@ -32,6 +32,9 @@ export class Orders {
   @Column({ nullable: true })
   reason: string
 
+  @Column({ default: true })
+  isActive: boolean
+
   @OneToMany(() => OrderDetail, (orderDetail) => orderDetail.order)
   orderDetails: OrderDetail[]
 
