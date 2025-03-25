@@ -62,6 +62,11 @@ export class OrdersController {
     return this.orderService.getRefundedOrderByUser(userId)
   }
 
+  @Get('getReadyToRefundOrderByUser/:userId')
+  getReadyToRefundOrderByUser(@Param('userId') userId: number) {
+    return this.orderService.getReadyToRefundOrderByUser(userId)
+  }
+
   @Get('getReturnedOrderByUser/:userId')
   getReturnedOrderByUser(@Param('userId') userId: number) {
     return this.orderService.getReturnedOrderByUser(userId)

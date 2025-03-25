@@ -27,8 +27,10 @@ export class AdminService {
       throw new NotFoundException('User not found')
     }
     user.status = false
-
-    return this.userRepository.save(user)
+    await this.userRepository.save(user)
+    return {
+      message: 'User deleted successfully'
+    }
   }
 
   async editUser(userInfo: UpdateUserDto, userId: number) {
