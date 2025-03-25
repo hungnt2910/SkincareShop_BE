@@ -43,6 +43,10 @@ export class ReviewsService {
       }
     })
 
+    if (existingReview) {
+      throw new BadRequestException('You have already reviewed this product in this order')
+    }
+
     const product = await this.skincareProductRepository.findOne({
       where: { productId: reviewByProductIdDto.productId }
     })
@@ -74,17 +78,10 @@ export class ReviewsService {
     review.rating = reviewByProductIdDto.rating
     review.comment = reviewByProductIdDto.comment
 
-    if (existingReview) {
-      return {
-        success: false,
-        message: 'You have already reviewed this product in this order'
-      }
-    } else {
-      await this.reviewsRepository.save(review)
-      return {
-        success: true,
-        message: 'Review created successfully'
-      }
+    await this.reviewsRepository.save(review)
+    return {
+      success: true,
+      message: 'Review created successfully'
     }
   }
 
